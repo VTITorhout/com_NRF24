@@ -1,0 +1,25 @@
+{
+  "name": "innovet_com_nrf24",
+  "version": "0.0.0",
+  "description": "Arduino UNO/ESP communication code for NRF24",
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "keywords": [],
+  "author": "Koen GEERAERT",
+  "license": "Creative Commons Attribution-ShareAlike 4.0 International License",
+  "dependencies": {},
+  "devDependencies": {
+    "vuepress": "^1.2.0",
+    "vuepress-plugin-zooming": "^1.1.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VTITorhout/com_NRF24.git"
+  },
+  "bugs": {
+    "url": "https://github.com/VTITorhout/com_NRF24.git/issues"
+  },
+  "homepage": "https://github.com/VTITorhout/com_NRF24.git#readme"
+}
