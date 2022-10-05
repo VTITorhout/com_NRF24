@@ -129,6 +129,10 @@ Het is dan ook belangrijk de NRF24 te voeden vanuit een LDO-regelaar i.p.v. een 
 
 ![NRF24 breakout board met LDO](./assets/nrf24_breakout.png)
 
+Indien er gebruik wordt gemaakt van een _genuine_ Arduino UNO is bovenstaand bordje zeker niet nodig, aangezien de ontwerper van het bord hier reeds rekening mee heeft gehouden. Op onderstaande afbeelding is het voedingsgedeelte te zien van een Aruino UNO R3. De 3V3 komt er via een LP2985, die een LDO is. Zelfs hogere spanningen (VIN, of via de zwarte power aansluiting) worden via een andere LDO (NCP1117ST50) eerst omgezet naar 5V, en vervolgens door de tweede LDO (LP2985) naar 3V3. Hierdoor wordt mogelijke storing voldoende weggewerkt. 
+
+![UNO R3 power supply](./assets/uno_pwr.png)
+
 ### Piekvermogen
 
 De NRF24 is in staat in zeer korte tijd een groot piekvermogen op te nemen, nodig om te kunnen zenden. Wanneer de NRF24 gevoed wordt via lange jumperdraadjes (wat meestal het geval is in labo opstellingen) kan de gevormde weerstand tussen voeding en NRF24 er voor zorgen dat dit niet kan geleverd worden. Dit probleem is niet op te merken in de communicatie (digitaal), maar situeert zich ter hoogte van het analoge gedeelte (transmitter/receiver). Dit zal altijd resulteren in ontvangstfouten, wat op applicatieniveau wel kan waargenomen worden. 
