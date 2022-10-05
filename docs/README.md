@@ -139,7 +139,14 @@ Dit euvel is eenvoudig op te lossen door zo dicht mogelijk bij de NRF24 een capa
 
 ## Interfacing
 
+Het aansluiten van de NRF24 op een microcontroller is vrij evident. In totaal zijn er een drietal zaken die moeten verbonden worden:
+* Voeding: **Opgelet** deze werkt op 3,3V!
+* SPI: Dit zijn meestal vaste pinnen, zie hiervoor de voorbeelden hieronder.
+* Controlesignalen: Deze zijn meestal vrij te kiezen en via software instelbaar.
+
 ### UNO
+
+![NRF24 verbonden met UNO](./assets/fritz_basis_uno.png)
 
 ### ESP8266
 
