@@ -49,12 +49,26 @@ Het zendvermogen van de module is instelbaar in een viertal stappen, waarbij ied
 
 | Versterking [dBm] | Verbruik [mA] | Code  |
 | :---------------: | :-----------: | :----:|
-| 0dBm | 11,3mA |   | `RF24_PA_MAX` |
-| -6dBm | 9mA |  `RF24_PA_HIGH` |
-| -12dBm | 7,5mA |  `RF24_PA_LOW` |
-| -18dBm | 7mA |  `RF24_PA_MIN` |
+| 0dBm | 11,3mA | `RF24_PA_MAX` |
+| -6dBm | 9mA | `RF24_PA_HIGH` |
+| -12dBm | 7,5mA | `RF24_PA_LOW` |
+| -18dBm | 7mA | `RF24_PA_MIN` |
+
+Naast het vermogen die essentieel is om te kunnen zenden zal de controller en de ontvangstlogica in de chip ook nog een deel vermogen opnemen, namelijk 13,5mA! Dit zal voortdurend gebeuren tijdens het luisteren (via `void startListening(void)`). Dit verbruik kan echter grotendeels worden uitgeschakeld via commando's, om het zo langer op een zelfde batterijlading te kunnen uithouden. Dit valt echter buiten het bestek van deze module, en voor hen die hierin interesse hebben wordt er verwezen naar volgende [youtube video](https://youtu.be/MvjpmsH2wKI) en de juiste commando's hiervoor, namelijk `void powerDown(void)` en `void powerUp(void)`.
 
 ### Aansluitingen
+
+De NRF24 communceert met de _host_ controller via een SPI-bus. Deze heeft volgende aansluitingen van doen:
+* MOSI (**M**aster **O**ut **S**lave **I**n): Data van _host_ controller naar NRF24
+* MISO (**M**aster **I**n **S**lave **O**ut): Data van NRF24 naar _host_ controller
+* SCK (**S**erial **C**loc**K**): Transmissie klok van _host_ controller naar NR24
+
+Naast de essentiële aansluitingen zijn er ook nog drie andere aansluitingen, waarvan er twee essentieel zijn voor de goede werking
+* CSN (**C**hip **S**elect i**N**verted): Op de SPI bus kunnen meerdere slaves aanwezig zijn. Het laagmaken van deze pin activeert de NRF24 om deel te nemen aan buscommunicatie.
+* CE (**C**hip **E**nable): Deze pin moet altijd hoog zijn opdat de NRF24 zou kunnen werken. Deze laagmaken plaatst de NRF24 in ultra low power mode (900nA).
+* IRQ (**I**nterrupt **R**e**Q**uest): De NRF24 kan deze pin hoog/laag maken bij ontvangst van data om zo de _host_ controller te informeren van ontvangst. Zie hiervoor [volgend voorbeeld](#uno-2)
+
+
 
 ## Het gebruikte protocol
 
