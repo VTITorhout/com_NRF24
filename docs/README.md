@@ -179,8 +179,7 @@ Merk op dat er gebruik wordt gemaakt van een externe bibliotheek die je moet toe
 
 ![Arduino bibliotheek](./assets/nrf24_bib.png)
 
-::: tip
-**Pinnen aanpassen**
+::: tip Pinnen aanpassen
 
 Zoals eerder aangehaald kun je de CSN en de CE pin zelf kiezen. Je kan dit aanpassen in de code a.d.h.v. volgende defines:
 
@@ -191,8 +190,7 @@ Zoals eerder aangehaald kun je de CSN en de CE pin zelf kiezen. Je kan dit aanpa
 
 :::
 
-::: tip
-**Adressering aanpassen**
+::: tip Adressering aanpassen
 
 Mocht je meerdere NRF24's gebruiken in een toepassing, dan moet je deze correct kunnen addresseren. Er wordt een verbinding opgezet van een _write pipe_ met een bepaald adres naar een _read pipe_ met **eenzelfde** adres. Dit adres kun je wijzigen a.d.h.v. volgende lijn code:
 
