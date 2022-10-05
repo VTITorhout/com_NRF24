@@ -21,7 +21,7 @@ De NRF24 alleen als IC is niet bruikbaar. Deze heeft nog allerlei randcomponente
 
 ### Spectrum
 
-De NRF24 is ontworpen om te werken in de 2,4GHz ISM band (vandaar ook zijn naam: __N__ordic __R__adio __F__requency __2__.__4__). Deze band is wellicht bij iedereen gekend als de band voor WiFi, wat klopt. De IC deelt het spectrum met deze van WiFi (en nog veel andere toepassingen, behorende tot de __I__ndustrial, __S__cientific en __M__edical werelden). 
+De NRF24 is ontworpen om te werken in de 2,4GHz ISM band (vandaar ook zijn naam: **N**ordic __R__adio __F__requency __2__.__4__). Deze band is wellicht bij iedereen gekend als de band voor WiFi, wat klopt. De IC deelt het spectrum met deze van WiFi (en nog veel andere toepassingen, behorende tot de __I__ndustrial, __S__cientific en __M__edical werelden). 
 
 ![WiFi spectrum](./assets/wifi_channels.png)
 
