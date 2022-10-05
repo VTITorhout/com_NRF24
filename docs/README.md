@@ -171,7 +171,7 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 ### Basis
 
 Met deze code is het mogelijk data te versturen van zender naar ontvanger. Er kan geselecteerd worden in de code welke rol het toestel moet hebben, dit a.d.h.v. een define:
-`#define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)`
+> `#define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)`
 
 De zender verzend vervolgens een byte data naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor.
 
@@ -179,11 +179,18 @@ Merk op dat er gebruik wordt gemaakt van een externe bibliotheek die je moet toe
 
 ![Arduino bibliotheek](./assets/nrf24_bib.png)
 
+In de code heb je enkele vrijheden. Als eerste kun je zelf kiezen welke pinnen je gebruikt voor de CSN en de CE. Dit gebeurd a.d.h.v. een define bovenaan de code:
+> ```cpp
+#define SPI_CSN 7   //pin to select NRF24
+#define SPI_CE  8   //pin to enable NRF24
+```
+
+
 #### UNO
 
 ```cpp
-#include <SPI.h>    //needed for SPI communication
-#include "RF24.h"
+#include <SPI.h>    //needed for SPI communication with NRF24
+#include <RF24.h>	//needed for L1, L2 and L4 communications with NRF24
 
 #define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)
 
