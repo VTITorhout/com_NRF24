@@ -33,7 +33,13 @@ Volgens de datasheet kan de IC gebruikt worden bij volgende frequenties:
 
 > The nRF24L01+ is designed for operation in the world wide ISM frequency band at 2.400 - 2.4835GHz.
 
-De NRF24 kan ingesteld worden om 125 kanalen te gebruiken, en dit elk van 1MHz bandbreedte. Het eerste kanaal start met een frequentie van 2400MHz, het volgende 2401MHz enzoverder. De aandachtige lezer zal wellicht opgemerkt hebben dat de kanalen vanaf 97 en verder niet gebruikt worden door WiFi, en dat deze dan ook bij uitstek geschikt zijn om ongestoord te communiceren. Wel is op te merken dat dit resulteert in een frequentie die buiten het door het ITU toegekende spectrum valt. 
+Wanneer we echter verder kijken in de datasheet zien we het volgende:
+
+> 126 RF channels
+> 1MHz non-overlapping channel spacing at 1Mbps
+> 2MHz non-overlapping channel spacing at 2Mbps
+
+De NRF24 kan ingesteld worden om 126 kanalen te gebruiken, en bij 1Mbit hebben deze elk maximaal 1MHz bandbreedte. Het eerste kanaal start met een frequentie van 2400MHz, het volgende 2401MHz enzoverder. De aandachtige lezer zal wellicht opgemerkt hebben dat de kanalen vanaf 97 en verder niet gebruikt worden door WiFi, en dat deze dan ook bij uitstek geschikt zijn om ongestoord te communiceren. Wel is op te merken dat dit resulteert in een frequentie die buiten het door het ITU toegekende spectrum valt, en men mogelijks illegaal bezig is.
 
 ### Vermogen
 
