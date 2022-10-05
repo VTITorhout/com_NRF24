@@ -45,7 +45,7 @@ De NRF24 kan ingesteld worden om 126 kanalen te gebruiken, en bij 1Mbit hebben d
 
 De NRF24 werkt op 3,3V en **NIET** op 5V. Een spanningsbereik van 1,9 tot 3,6V is acceptabel. Bij lagere spanningen zal de module niet werken (wat op zich geen probleem is), bij hogere spanningen zal de module stuk gaan (wat wel een probleem is). De digitale pinnen (in- en uitgangen) zijn echter wel 5V compatibel, en kunnen dus rechtstreeks aangesloten worden op bijvoorbeeld een Arduino [UNO](#uno). Bij een [ESP8266](#esp8266) en een [ESP32](#esp32) is er totaal geen probleem.
 
-Het zendvermogen van de module is instelbaar in een viertal stappen, waarbij ieder vermogen in een zeker verbruik resulteert. Met het extra vermogen zal er wel een grotere afstand kunnen overbrugd worden, maar zal ook een groter verbruik gepaard gaan. Houd rekening dat de voeding deze pieken (tijdens zenden) moet kunnen leveren. Zie hiervoor [voedingsprobleem](#voedingsproblemen).
+Het zendvermogen van de module is instelbaar in een viertal stappen, waarbij ieder vermogen in een zeker verbruik resulteert. Met het extra vermogen zal er wel een grotere afstand kunnen overbrugd worden, maar zal ook een groter verbruik gepaard gaan. Houd rekening dat de voeding deze pieken (tijdens zenden) moet kunnen leveren. Zie hiervoor [voedingsprobleem](#piekvermogen).
 
 | Versterking [dBm] | Verbruik [mA] | Code  |
 | :---------------: | :-----------: | :----:|
@@ -81,7 +81,7 @@ Maar communicatie gaat verder dan dit. Naast de afspraken op niveau 0 moeten ook
 * Hoe weet een toestel dat de data voor hem bestemd is?
 * Hoe ben je zeker dat de ontvangen data niet corrupt is?
 
-Bij de modulatietechniek wordt hier niet over gesproken, aangezien de modulatietechniek zich situeert op niveau 0 van het OSI model. Nordic Semiconductors heeft echter wel een eigen protocol toegevoegd bovenop de modulatietechniek, namelijk het _enhanced ShockBurst_ protocol, wat zich situeert op niveau 1 & 2. In dit protocol (zie hieronder) is er ruimte gelaten voor de data van de gebruiker, die op zijn beurt een hogere laag van het OSI model kan implementeren. Meestal zal dit meteen laag 7 zijn (applicatie laag).
+Bij de modulatietechniek wordt hier niet over gesproken, aangezien de modulatietechniek zich situeert op niveau 0 van het OSI model. Nordic Semiconductors heeft echter wel een eigen protocol toegevoegd bovenop de modulatietechniek, namelijk het _enhanced ShockBurst_ protocol, wat zich situeert op niveau 1, 2 & 4. In dit protocol (zie hieronder) is er ruimte gelaten voor de data van de gebruiker, die op zijn beurt een hogere laag van het OSI model kan implementeren. Meestal zal dit meteen laag 7 zijn (applicatie laag).
 
 ### (Enhanced) ShockBurst
 
@@ -95,11 +95,11 @@ De NRF24 maakt  gebruikt van een propriëtair protocol die zich situeert op laag
 | Payload | 0-32 bytes | 7 (applicatie) | Vrij in te vullen veld voor de gebruiker |
 | CRC | 1-2 bytes | 1 (datalink) | Foutcontrole corrupte data |
 
-Als gebruiker hebben wij nood om data te verzenden naar een specifieke gebruiker. De velden die voor ons van interesse zijn beperken zich dan ook tot het _adres_ en de _payload_. De overige velden zullen ingevuld worden doordat we gebruik maken van een bibliotheek.
+Als gebruiker hebben wij nood aan data verzenden naar een specifieke gebruiker. De velden die voor ons van interesse zijn beperken zich dan ook tot het _adres_ en de _payload_. De overige velden zullen ingevuld worden doordat we gebruik maken van een bibliotheek.
 
 ### Auto ACK
 
-Het _Enhanced_ protocol laat toe dat er controle gebeurd op het al dan niet feilloos verzenden van data. Dit is eigenlijk iets die beschreven wordt op niveau 4 (transport laag) van het OSI-model. Dit is meestal iets die door software moet geïmplementeerd worden, maar Nordic heeft beslist dit op te nemen in hun controller, zodat de software voor de eindgebruiker eenvoudiger wordt. Het _packet control_ veld wordt hiervoor gebruikt en verder opgedeeld in drie nieuwe velden:
+Het _Enhanced_ protocol laat toe dat er controle gebeurd op het al dan niet feilloos verzenden van data. De controle hiervan wordt beschreven op niveau 4 (transport laag) van het OSI-model, die meer toebehoort aan de software dan aan de hardware. Nordic heeft echter beslist dit op te nemen in hun controller, zodat de software voor de eindgebruiker eenvoudiger wordt. Het _packet control_ veld wordt hiervoor gebruikt en verder opgedeeld in drie nieuwe velden:
 
 | Veld | Grootte | OSI-laag | Nut |
 | :--: | :-----: | :------: | :-: |
@@ -109,11 +109,27 @@ Het _Enhanced_ protocol laat toe dat er controle gebeurd op het al dan niet feil
 
 Het _packet ID_ en de _no ACK_ kunnen nu gebruikt worden om een bericht te identificeren. Er kan hier expliciet gevraagd worden aan de ontvanger om een bericht terug te sturen wanneer deze het pakket feilloos heeft ontvangen. Hiervoor moet de ontvanger een bericht terugsturen met dezelfde ID. Pas wanneer de zender dit pakket heeft ontvangen kan men er zeker van zijn dat het bericht 100% zeker de ontvanger heeft bereikt. 
 
-Merk op dat een pakket verloren/corrupt kan geraken tijdens zenden van zender naar ontvanger, maar eveneens omgekeerd. Het kan dus ook zijn dat de ontvanger eenzelfde pakket meerdere maken zal ontvangen. Hiervoor dient eveneens de ID die toelaat te controleren of het pakket reeds feilloos is ontvangen.
+Merk op dat een pakket verloren/corrupt kan geraken tijdens zenden van zender naar ontvanger, maar eveneens omgekeerd. Het kan dus ook zijn dat de ontvanger eenzelfde pakket meerdere malen zal ontvangen. Hiervoor dient eveneens de ID die toelaat te controleren of het pakket reeds feilloos is ontvangen.
 
 # Gebruik van de NRF24
 
 ## Voedingsproblemen
+
+### Storing
+
+De NRF24 IC is een analoog/digitale IC, waarbij het analoge gedeelte een zeer hoge ingangsgevoeligheid heeft zodat dit feilloos zeer zwakke RF signalen kan opvangen. Storing op de voeding zal dan ook meestal zorgen voor corrupte data bij ontvangst. Het is dan ook belangrijk dat de gebruikte voeding voldoende stabiel is en geen gesuperponeerd AC signaal bevat. Dit AC signaal kan er typisch komen van een schakelende regelaar. 
+
+![Supply noise](./assets/supply_noise.png)
+
+Op bovenstaande afbeelding is duidelijk te zien dat er  twee soorten storingen zijn:
+* Ripple: De regelaar kan pas regelen als er een fout is (zie regeltechnieken 6de middelbaar). De uitgangsspanning moet dus afwijken vooraleer er kan bijgeregeld worden. Dit zorgt voor een AC-signaal met een zekere amplitude. Bij hedendaagse regelaars is dit weinig waarneembaar. 
+* Noise: De regelaar, meestal van het type DC/DC zal zijn uitgangstrap in- en uitschakelen. Bij het in- en uitschakelen zullen er overgangsverschijnselen ontstaan aangezien het altijd een RLC-keten is die wordt aangestuurd. Deze overgangsverschijnselen zorgen voor _ringing_ en zijn van gedempt (doven uit). De amplitude van deze _ringing_ is echter niet verwaarloosbaar en zorgt voor ontvangstproblemen.
+
+Het is dan ook belangrijk de NRF24 te voeden vanuit een LDO-regelaar i.p.v. een geschakelde regelaar. Indien men toch een geschakelde regelaar wil gebruiken is het best deze op een hogere spanning te nemen (bijvoorbeeld 5V) en deze te laten volgen door een LDO (naar 3,3V). In de handel zijn hiervoor overgangsbordjes te vinden, gelijkend op deze hieronder waarop duidelijk een LDO (type AMS1117-3.3) met bijhorende onkoppelcondensatoren te zien is.
+
+![NRF24 breakout board met LDO](./assets/nrf24_breakout.png)
+
+### Piekvermogen
 
 ## Interfacing
 
