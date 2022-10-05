@@ -144,9 +144,23 @@ Het aansluiten van de NRF24 op een microcontroller is vrij evident. In totaal zi
 * SPI: Dit zijn meestal vaste pinnen, zie hiervoor de voorbeelden hieronder.
 * Controlesignalen: Deze zijn meestal vrij te kiezen en via software instelbaar.
 
+Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met hierbij detail over vrijheden.
+
 ### UNO
 
 ![NRF24 verbonden met UNO](./assets/fritz_basis_uno.png)
+
+| NRF24 pin | UNO pin | Vrijheid | Opmerkingen |
+| :--: | :-----: | :------: | :-: |
+| VCC | 3V3 | NEE | **Opgelet: verbind niet met de 5V!** |
+| GND | GND | JA, er zijn meerdere GND pinnen |  |
+| CE | P8 | JA, iedere digitale output kan gebruikt worden | Kan ook rechtstreeks met de 3V3 of 5V verbonden worden |
+| CSN | P7 | JA, iedere digitale output kan gebruikt worden |  |
+| SCK | P13 | NEE |  |
+| MOSI | P11 | NEE |  |
+| MISO | P12 | NEE |  |
+| IRQ | P2 | NEE | Deze verbinding is optioneel, nodig indien gebruik moet gemaakt worden van IRQ's |
+
 
 ### ESP8266
 
