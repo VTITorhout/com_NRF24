@@ -81,9 +81,19 @@ Maar communicatie gaat verder dan dit. Naast de afspraken op niveau 0 moeten ook
 * Hoe weet een toestel dat de data voor hem bestemd is?
 * Hoe ben je zeker dat de ontvangen data niet corrupt is?
 
-Bij de modulatietechniek wordt hier niet over gesproken, aangezien de modulatietechniek zich situeert op niveau 0 van het OSI model. Nordic Semiconductors heeft echter wel een eigen protocol toegevoegd bovenop de modulatietechniek, namelijk het _enhanced ShockBurst_ protocol, wat zich situeert op niveau 1. In dit protocol (zie hieronder) is er ruimte gelaten voor de data van de gebruiker, die op zijn beurt een hogere laag van het OSI model kan implementeren. Meestal zal dit meteen laag 7 zijn (applicatie laag).
+Bij de modulatietechniek wordt hier niet over gesproken, aangezien de modulatietechniek zich situeert op niveau 0 van het OSI model. Nordic Semiconductors heeft echter wel een eigen protocol toegevoegd bovenop de modulatietechniek, namelijk het _enhanced ShockBurst_ protocol, wat zich situeert op niveau 1 & 2. In dit protocol (zie hieronder) is er ruimte gelaten voor de data van de gebruiker, die op zijn beurt een hogere laag van het OSI model kan implementeren. Meestal zal dit meteen laag 7 zijn (applicatie laag).
 
 ### (Enhanced) ShockBurst
+
+De NRF24 maakt  gebruikt van een propriëtair protocol die zich situeert op laag 1 en 2 van het OSI-model. Het is een heel eenvoudig protocol die kan opgedeeld worden in vijf verschillende velden:
+
+| Veld | Grootte | OSI-laag | Nut |
+| :--: | :-----: | :------: | :-: |
+| Preamble | 1 byte | 1 (datalink) | Aanduiding begin van nieuw bericht |
+| Address | 3-5 bytes | 2 (netwerk) | Addressering van ontvanger |
+| Packet control | 9 bytes | 1 (datalink) | Beschrijving frame opbouw |
+| Payload | 0-32 bytes | 7 (applicatie) | Vrij in te vullen veld voor de gebruiker |
+| CRC | 1-2 bytes | 1 (datalink) | Foutcontrole corrupte data |
 
 ### Auto ACK
 
