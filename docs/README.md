@@ -95,7 +95,21 @@ De NRF24 maakt  gebruikt van een propriëtair protocol die zich situeert op laag
 | Payload | 0-32 bytes | 7 (applicatie) | Vrij in te vullen veld voor de gebruiker |
 | CRC | 1-2 bytes | 1 (datalink) | Foutcontrole corrupte data |
 
+Als gebruiker hebben wij nood om data te verzenden naar een specifieke gebruiker. De velden die voor ons van interesse zijn beperken zich dan ook tot het _adres_ en de _payload_. De overige velden zullen ingevuld worden doordat we gebruik maken van een bibliotheek.
+
 ### Auto ACK
+
+Het _Enhanced_ protocol laat toe dat er controle gebeurd op het al dan niet feilloos verzenden van data. Dit is eigenlijk iets die beschreven wordt op niveau 4 (transport laag) van het OSI-model. Dit is meestal iets die door software moet geïmplementeerd worden, maar Nordic heeft beslist dit op te nemen in hun controller, zodat de software voor de eindgebruiker eenvoudiger wordt. Het _packet control_ veld wordt hiervoor gebruikt en verder opgedeeld in drie nieuwe velden:
+
+| Veld | Grootte | OSI-laag | Nut |
+| :--: | :-----: | :------: | :-: |
+| Payload lenght | 6 bytes | 1 (datalink) | Lengte van de payload (i.p.v. eerdere fixed length) |
+| Packet ID | 2 bytes | 4 (transport) | Unieke ID van het pakket |
+| No ACK | 1 byte | 4 (transport) | ACK request |
+
+Het _packet ID_ en de _no ACK_ kunnen nu gebruikt worden om een bericht te identificeren. Er kan hier expliciet gevraagd worden aan de ontvanger om een bericht terug te sturen wanneer deze het pakket feilloos heeft ontvangen. Hiervoor moet de ontvanger een bericht terugsturen met dezelfde ID. Pas wanneer de zender dit pakket heeft ontvangen kan men er zeker van zijn dat het bericht 100% zeker de ontvanger heeft bereikt. 
+
+Merk op dat een pakket verloren/corrupt kan geraken tijdens zenden van zender naar ontvanger, maar eveneens omgekeerd. Het kan dus ook zijn dat de ontvanger eenzelfde pakket meerdere maken zal ontvangen. Hiervoor dient eveneens de ID die toelaat te controleren of het pakket reeds feilloos is ontvangen.
 
 # Gebruik van de NRF24
 
@@ -129,8 +143,8 @@ De NRF24 maakt  gebruikt van een propriëtair protocol die zich situeert op laag
 
 #### ESP32
 
-### Structures
+### Good practice
 
-#### Structure
+#### Structures
 
 #### Union
