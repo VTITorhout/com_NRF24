@@ -49,10 +49,10 @@ Het zendvermogen van de module is instelbaar in een viertal stappen, waarbij ied
 
 | Versterking [dBm] | Verbruik [mA] | Code  |
 | :---------------: | :-----------: | :----:|
-| 0dBm | 11,3mA |   | 'RF24_PA_MAX'
-| -6dBm | 9mA |  'RF24_PA_HIGH' |
-| -12dBm | 7,5mA |  'RF24_PA_LOW' |
-| -18dBm | 7mA |  'RF24_PA_MIN' |
+| 0dBm | 11,3mA |   | `RF24_PA_MAX` |
+| -6dBm | 9mA |  `RF24_PA_HIGH` |
+| -12dBm | 7,5mA |  `RF24_PA_LOW` |
+| -18dBm | 7mA |  `RF24_PA_MIN` |
 
 ### Aansluitingen
 
