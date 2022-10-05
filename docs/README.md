@@ -12,9 +12,9 @@ Als het gaat over _low power_ draadloze communicatie is Nordic Semiconductors we
 
 De NRF24 alleen als IC is niet bruikbaar. Deze heeft nog allerlei randcomponenten nodig voordat deze kan gebruikt worden. In de handel zijn dan ook veel modules te vinden waarop deze IC is gemonteerd, samen met zijn randcomponenten:
 * Antenne (meestal opgenomen als PCB trace)
-* Voedingsstabilisatie (condensatoren, waarbij meestal __te weinig__ is voorzien. Zie hiervoor verder bij * [voedingsprobleem](#Voedingsprobleem))
+* Voedingsstabilisatie (condensatoren, waarbij meestal __te weinig__ is voorzien. Zie hiervoor verder bij [voedingsprobleem](#Voedingsprobleem))
 * Oscillator
-* Breakout pinnen (meestal, soms via * [castellations] (https://www.eurocircuits.com/blog/castellations-on-a-pcb/))
+* Breakout pinnen (meestal, soms via [castellations](https://www.eurocircuits.com/blog/castellations-on-a-pcb/))
 
 ### Spectrum
 
