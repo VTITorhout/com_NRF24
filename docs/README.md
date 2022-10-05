@@ -173,7 +173,11 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 Met deze code is het mogelijk data te versturen van zender naar ontvanger. Er kan geselecteerd worden in de code welke rol het toestel moet hebben, dit a.d.h.v. een define:
 `#define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)`
 
-De zender verzend een byte data naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor.
+De zender verzend vervolgens een byte data naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor.
+
+Merk op dat er gebruik wordt gemaakt van een externe bibliotheek die je moet toevoegen aan je systeem. Ga hiervoor naar _bibliotheken beheren_ binnen de Arduino omgeving en zoek vervolgens op _RF24_. Installeer vervolgens de bibliotheek met exact deze naam.
+
+![Arduino bibliotheek](./assets/nrf24_bib.png)
 
 #### UNO
 
