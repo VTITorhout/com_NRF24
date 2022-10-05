@@ -10,10 +10,10 @@ Als het gaat over _low power_ draadloze communicatie is Nordic Semiconductors we
 
 ## De draadloze module
 
-De NRF24 alleen als IC is niet bruikbaar. Deze heeft nog allerlei randcomponenten nodig voordat deze kan gebruikt worden. In de handel zijn dan ook veel modules te vinden waarop deze IC is gemonteerd, samen met zijn randcomponenten:
+De NRF24 alleen als IC is niet bruikbaar. Deze heeft nog allerlei randcomponenten nodig voordat deze kan gebruikt worden. In de handel zijn dan ook veel (identieke, volgens het voorbeeld van Nordic) modules te vinden waarop deze IC is gemonteerd, samen met zijn randcomponenten:
 1. Antenne (meestal opgenomen als PCB trace)
 1. RF filter
-1. Voedingsstabilisatie (condensatoren, waarbij meestal __te weinig__ is voorzien. Zie hiervoor verder bij [voedingsprobleem](#Voedingsprobleem))
+1. Voedingsstabilisatie (condensatoren, waarbij meestal __te weinig__ is voorzien. Zie hiervoor verder bij [voedingsprobleem](#voedingsprobleem))
 1. Oscillator
 1. Breakout pinnen (meestal, soms via [castellations](https://www.eurocircuits.com/blog/castellations-on-a-pcb/))
 
@@ -41,9 +41,18 @@ Wanneer we echter verder kijken in de datasheet zien we het volgende:
 
 De NRF24 kan ingesteld worden om 126 kanalen te gebruiken, en bij 1Mbit hebben deze elk maximaal 1MHz bandbreedte. Het eerste kanaal start met een frequentie van 2400MHz, het volgende 2401MHz enzoverder. De aandachtige lezer zal wellicht opgemerkt hebben dat de kanalen vanaf 97 en verder niet gebruikt worden door WiFi, en dat deze dan ook bij uitstek geschikt zijn om ongestoord te communiceren. Wel is op te merken dat dit resulteert in een frequentie die buiten het door het ITU toegekende spectrum valt, en men mogelijks illegaal bezig is.
 
-### Vermogen
+### Voeding en vermogen
 
+De NRF24 werkt op 3,3V en **NIET** op 5V. Een spanningsbereik van 1,9 tot 3,6V is acceptabel. Bij lagere spanningen zal de module niet werken (wat op zich geen probleem is), bij hogere spanningen zal de module stuk gaan (wat wel een probleem is). De digitale pinnen (in- en uitgangen) zijn echter wel 5V compatibel, en kunnen dus rechtstreeks aangesloten worden op bijvoorbeeld een Arduino [UNO](#uno). Bij een [ESP8266](#esp8266) en een [ESP32](#esp32) is er totaal geen probleem.
 
+Het zendvermogen van de module is instelbaar in een viertal stappen, waarbij ieder vermogen in een zeker verbruik resulteert. Met het extra vermogen zal er wel een grotere afstand kunnen overbrugd worden, maar zal ook een groter verbruik gepaard gaan. Houd rekening dat de voeding deze pieken (tijdens zenden) moet kunnen leveren. Zie hiervoor [voedingsprobleem](#voedingsprobleem).
+
+| Versterking [dBm] | Verbruik [mA] | Code  |
+| :---------------: | :-----------: | :----:|
+| 0dBm | 11,3mA |   | 'RF24_PA_MAX'
+| -6dBm | 9mA |  'RF24_PA_HIGH' |
+| -12dBm | 7,5mA |  'RF24_PA_LOW' |
+| -18dBm | 7mA |  'RF24_PA_MIN' |
 
 ### Aansluitingen
 
