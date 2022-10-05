@@ -181,10 +181,14 @@ Merk op dat er gebruik wordt gemaakt van een externe bibliotheek die je moet toe
 
 In de code heb je enkele vrijheden. Als eerste kun je zelf kiezen welke pinnen je gebruikt voor de CSN en de CE. Dit gebeurd a.d.h.v. een define bovenaan de code:
 ```cpp
->#define SPI_CSN 7   //pin to select NRF24
->#define SPI_CE  8   //pin to enable NRF24
+#define SPI_CSN 7   //pin to select NRF24
+#define SPI_CE  8   //pin to enable NRF24
 ```
 
+Mocht je meerdere NRF24's gebruiken in een toepassing, dan moet je deze correct kunnen addresseren. Er wordt een verbinding opgezet van een _write pipe_ met een bepaald adres naar een _read pipe_ met **eenzelfde** adres. Dit adres kun je wijzigen a.d.h.v. volgende lijn code:
+> `const byte address[6] = {0x2B, 0x96, 0x09, 0xB6, 0x35}; //unique address for NRF24`
+
+Aan de rest van het programma hoeft er op zich niets aangepast te worden.
 
 #### UNO
 
