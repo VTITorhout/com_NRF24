@@ -180,9 +180,9 @@ Merk op dat er gebruik wordt gemaakt van een externe bibliotheek die je moet toe
 ![Arduino bibliotheek](./assets/nrf24_bib.png)
 
 In de code heb je enkele vrijheden. Als eerste kun je zelf kiezen welke pinnen je gebruikt voor de CSN en de CE. Dit gebeurd a.d.h.v. een define bovenaan de code:
-> ```cpp
-#define SPI_CSN 7   //pin to select NRF24
-#define SPI_CE  8   //pin to enable NRF24
+```cpp
+>#define SPI_CSN 7   //pin to select NRF24
+>#define SPI_CE  8   //pin to enable NRF24
 ```
 
 
