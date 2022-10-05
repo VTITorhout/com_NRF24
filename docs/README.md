@@ -305,6 +305,38 @@ void loop() {
 
 ### Piggyback data
 
+De code van de [basisversie](#basis) is reeds voorzien om te werken met piggyback data. Je kon dit merken doordat in de seriële monitor er bij het verzenden een melding gemaakt werd van `TX OK, no piggyback data`.
+
+![Seriële monitor basisprogramma](./assets/mon_basis.png)
+
+In plaats van voortdurend de _role_ te wijzigen tussen zender en ontvanger (wat wel een mogelijkheid is, maar de code hierdoor stukken moeilijker wordt) maken we gebruik van het _acknowledge_ bericht bij de ontvanger om data terug te sturen naar de zender. Wel moeten we reeds het bericht klaargezet hebben vooraleer de zender zijn data verzend, aangezien de _acknowledging_ in hardware is opgenomen.  Dit kan gebeuren a.d.h.v. volgend commando:
+
+```cpp
+bool writeAckPayload(uint8_t pipe, const void* buf, uint8_t len);
+```
+
+Passen we het voorbeeld aan van de UNO (voor de ESP's is dit identiek):
+
+```cpp
+  ...
+  #else
+    if(radio.available()){
+      //there is data received, display the data
+      radio.read(&rxBuff,radio.getDynamicPayloadSize());
+      //show the content
+      Serial.print("NRF:\tRX: ");
+      Serial.println(rxBuff[0]);
+      //we'll resend the received data to the transmitter with the next ACK package
+      radio.writeAckPayload(1, &rxBuff[0], 1);  //pipe, data, length --> send received byte back to transmitter
+    }
+  #endif
+  ...
+```
+
+Wat resulteert in volgende output in de seriële monitor:
+
+![Seriële monitor piggyback](./assets/mon_piggy.png)
+
 ### IRQ's
 
 #### UNO
