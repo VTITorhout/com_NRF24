@@ -123,13 +123,19 @@ De NRF24 IC is een analoog/digitale IC, waarbij het analoge gedeelte een zeer ho
 
 Op bovenstaande afbeelding is duidelijk te zien dat er  twee soorten storingen zijn:
 * Ripple: De regelaar kan pas regelen als er een fout is (zie regeltechnieken 6de middelbaar). De uitgangsspanning moet dus afwijken vooraleer er kan bijgeregeld worden. Dit zorgt voor een AC-signaal met een zekere amplitude. Bij hedendaagse regelaars is dit weinig waarneembaar. 
-* Noise: De regelaar, meestal van het type DC/DC zal zijn uitgangstrap in- en uitschakelen. Bij het in- en uitschakelen zullen er overgangsverschijnselen ontstaan aangezien het altijd een RLC-keten is die wordt aangestuurd. Deze overgangsverschijnselen zorgen voor _ringing_ en zijn van gedempt (doven uit). De amplitude van deze _ringing_ is echter niet verwaarloosbaar en zorgt voor ontvangstproblemen.
+* Noise: De regelaar, meestal van het type DC/DC zal zijn uitgangstrap in- en uitschakelen. Bij het in- en uitschakelen zullen er overgangsverschijnselen ontstaan aangezien het altijd een RLC-keten is die wordt aangestuurd. Deze overgangsverschijnselen zorgen voor _ringing_ en zijn gedempt (doven uit). De amplitude van deze _ringing_ is echter niet verwaarloosbaar en zorgt voor ontvangstproblemen.
 
 Het is dan ook belangrijk de NRF24 te voeden vanuit een LDO-regelaar i.p.v. een geschakelde regelaar. Indien men toch een geschakelde regelaar wil gebruiken is het best deze op een hogere spanning te nemen (bijvoorbeeld 5V) en deze te laten volgen door een LDO (naar 3,3V). In de handel zijn hiervoor overgangsbordjes te vinden, gelijkend op deze hieronder waarop duidelijk een LDO (type AMS1117-3.3) met bijhorende onkoppelcondensatoren te zien is.
 
 ![NRF24 breakout board met LDO](./assets/nrf24_breakout.png)
 
 ### Piekvermogen
+
+De NRF24 is in staat in zeer korte tijd een groot piekvermogen op te nemen, nodig om te kunnen zenden. Wanneer de NRF24 gevoed wordt via lange jumperdraadjes (wat meestal het geval is in labo opstellingen) kan de gevormde weerstand tussen voeding en NRF24 er voor zorgen dat dit niet kan geleverd worden. Dit probleem is niet op te merken in de communicatie (digitaal), maar situeert zich ter hoogte van het analoge gedeelte (transmitter/receiver). Dit zal altijd resulteren in ontvangstfouten, wat op applicatieniveau wel kan waargenomen worden. 
+
+Dit euvel is eenvoudig op te lossen door zo dicht mogelijk bij de NRF24 een capaciteit van voldoende grootte te plaatsen (grootorde microfarads). Deze kan eenvoudig op de connector bijgesoldeerd worden. Respecteer hiervoor wel de VCC en de GND!
+
+![NRF24 toegevoegde capaciteit](./assets/nrf24_cap.png)
 
 ## Interfacing
 
