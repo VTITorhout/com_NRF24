@@ -1,6 +1,60 @@
-# MQTT
-## Pricipe MQTT
-Het MQTT-protocol (Message Queuing Telemetry Transport) wordt zeer veel gebruikt
-in IoT toepassingen om sensordata te versturen en deze terug op te halen. MQTT
-maakt gebruik van een Broker. De clients zijn in staat om zowel data te
-publiceren als te abonneren (subscribe) bij een broker op data.
+# NRF24
+
+In heel veel toepassing komt het wel eens voor dat er nood is aan draadloze communicatie, maar in sommige gevallen kan het gebruik van WiFi of Bluetooth uit den boze zijn wegens te complex of een te groot vermogensverbruik. Denken we hierbij aan IoT toepassingen waar er datacaptatie nodig is op afstand, bij robotica waar kabelverbindingen niet mogelijk zijn of zelfs domotica, om eenvoudig een schakelaar bij te plaatsen zonder dat er hoeft gekapt en geboord te worden in muren. 
+
+Zeker bij dit laatste voorbeeld is het gebruik van een draadloze technologie die weinig vermogen vereist bijzonder belangrijk, want het toestel moet gedurende enkele jaren meegaan op één batterij. 
+
+Als het gaat over _low power_ draadloze communicatie is Nordic Semiconductors wellicht de grootste speler op de markt. Omwille van die reden vinden we dan ook in de elektronica heel dikwijls draadloze modules terug die gebruik maken van een IC van deze fabrikant. Hierbij is de NRF24 IC wellicht de meest gekende, die ook reeds zijn _counterfeits_ kent zoals de Si24. Deze laatste is echter volledig namaak, gebasseerd op een verouderd procestechnologie waardoor het verbruik hoger ligt en de gevoeligheid een stuk slechter is.
+
+![NRF24 IC](./assets/nrf24_ic.png)
+
+
+## De draadloze module
+
+### Spectrum
+
+### Vermogen
+
+### Aansluitingen
+
+## Het gebruikte protocol
+
+### (Enhanced) ShockBurst
+
+### Auto ACK
+
+# Gebruik van de NRF24
+
+## Interfacing
+
+### UNO
+
+### ESP8266
+
+### ESP32
+
+## Voorbeeldcode
+
+### Basis
+
+#### UNO
+
+#### ESP8266
+
+#### ESP32
+
+### Piggyback data
+
+### IRQ's
+
+#### UNO
+
+#### ESP8266
+
+#### ESP32
+
+### Structures
+
+#### Structure
+
+#### Union
