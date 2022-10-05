@@ -153,13 +153,13 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 | NRF24 pin | UNO pin | Vrijheid | Opmerkingen |
 | :--: | :-----: | :------: | :-: |
 | VCC | 3V3 | NEE | **Opgelet: verbind niet met de 5V!** |
-| GND | GND | JA, er zijn meerdere GND pinnen |  |
-| CE | P8 | JA, iedere digitale output kan gebruikt worden | Kan ook rechtstreeks met de 3V3 of 5V verbonden worden |
-| CSN | P7 | JA, iedere digitale output kan gebruikt worden |  |
+| GND | GND | JA; er zijn meerdere GND pinnen |  |
+| CE | P8 | JA; iedere digitale output kan gebruikt worden | Kan ook rechtstreeks met de 3V3 of 5V verbonden worden |
+| CSN | P7 | JA; iedere digitale output kan gebruikt worden |  |
 | SCK | P13 | NEE |  |
 | MOSI | P11 | NEE |  |
 | MISO | P12 | NEE |  |
-| IRQ | P2 | NEE | Deze verbinding is optioneel, nodig indien gebruik moet gemaakt worden van IRQ's |
+| IRQ | P2 | NEE | Deze verbinding is optioneel, nodig indien gebruik moet gemaakt worden van interrupts |
 
 
 ### ESP8266
@@ -170,7 +170,103 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 
 ### Basis
 
+Met deze code is het mogelijk data te versturen van zender naar ontvanger. Er kan geselecteerd worden in de code welke rol het toestel moet hebben, dit a.d.h.v. een define:
+`#define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)`
+
+De zender verzend een byte data naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor.
+
 #### UNO
+
+```cpp
+#include <SPI.h>    //needed for SPI communication
+#include "RF24.h"
+
+#define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)
+
+#define SPI_CSN 7   //pin to select NRF24
+#define SPI_CE  8   //pin to enable NRF24
+
+const byte address[6] = {0x2B, 0x96, 0x09, 0xB6, 0x35}; //unique address for NRF24
+
+RF24 radio(SPI_CE, SPI_CSN);  //create NRF24 object to communicate with visualisation
+
+uint8_t rxBuff[32];
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("NRF24 on Arduino UNO");
+   #if defined(ROLE_TX) && (ROLE_TX == true)
+    Serial.println("\tRole = transmitter");
+   #else
+    Serial.println("\tRole = receiver");
+   #endif
+  if(radio.begin()){
+    if(radio.isChipConnected()){
+      if(radio.isPVariant()){
+        Serial.print("NRF:\tPro ");
+        radio.enableDynamicPayloads();    //short messages (not 32 bytes)
+        radio.enableAckPayload();         //piggy back data with ACK
+        radio.setDataRate(RF24_250KBPS);  //set the data rate
+      }else{
+        Serial.print("NRF:\tBasic ");
+        radio.setDataRate(RF24_1MBPS);    //set the data rate
+      }
+      Serial.println("radio detected");
+      radio.setPALevel(RF24_PA_MAX);      //set the power of the device
+      radio.setChannel(100);              //set the channel to 2,5GHz
+      radio.setRetries(7,3);              //set the retries (space them in time)
+    }else{
+      Serial.println("ERR:\tNo radio detected!");
+      while(1); //no need to continue
+    }
+  }else{
+    Serial.println("ERR:\tFailed to create RF24 object");
+    while(1); //no need to continue
+  }
+  #if defined(ROLE_TX) && (ROLE_TX == true)
+    radio.stopListening();                  //Set module as transmitter
+    radio.openWritingPipe(address);         //set the address
+  #else
+    radio.openReadingPipe(1, address);  //set the address
+    radio.startListening(); //Set module as receiver
+  #endif
+}
+
+uint8_t cnt = 0;
+
+void loop() {
+  #if defined(ROLE_TX) && (ROLE_TX == true)
+    if(radio.write(&cnt, 1)){
+      if(radio.isAckPayloadAvailable()){
+          Serial.print("NRF:\tTX OK, piggyback data received (");
+          Serial.print(radio.getDynamicPayloadSize());
+          Serial.print(" bytes): ");
+          radio.read(&rxBuff, radio.getDynamicPayloadSize());
+          for(uint8_t i=0;i<radio.getDynamicPayloadSize();i++){
+            Serial.print("0x");
+            Serial.print(rxBuff[i],HEX);
+            Serial.print(" ");
+          }
+          Serial.println();
+      }else{
+          Serial.println("NRF:\tTX OK, no piggyback data");
+      }
+      cnt++;
+    }else{
+        Serial.println("NRF:\tTX failed!");
+    }
+    delay(1000);
+  #else
+    if(radio.available()){
+      //there is data received, display the data
+      radio.read(&rxBuff,radio.getDynamicPayloadSize());
+      //show the content
+      Serial.print("NRF:\tRX: ");
+      Serial.println(rxBuff[0]);
+    }
+  #endif
+}
+```
 
 #### ESP8266
 
