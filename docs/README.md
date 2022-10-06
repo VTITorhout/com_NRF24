@@ -163,7 +163,7 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 | SCK | P13 | NEE |  |
 | MOSI | P11 | NEE |  |
 | MISO | P12 | NEE |  |
-| IRQ | P2 | NEE | Enkel P0 laat een externe interrupt toe. Overigens is deze verbinding optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
+| IRQ | P2 | NEE | Enkel P2 laat een externe interrupt toe. Overigens is deze verbinding optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
 
 
 ### ESP8266
@@ -181,13 +181,51 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 | MISO | GPIO12 | NEE |  |
 | IRQ | GPIO5 | JA; iedere digitale input kan als interrupt gebruikt worden | Deze verbinding is optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
 
+De ESP8266 is een vrij moeilijke IC m.b.t. de pinnen. Onderstaande lijst is informatie en beschrijft welke pinnen er als in- en als uitgang kunnen gebruikt worden. Eveneens wordt er detail gegegeven of er al dan niet speciale zaken zijn waarmee rekening moet gehouden worden.
+
+In de code moet gebruik gemaakt worden van de GPIO nummers (waarbij GPIO wordt weggelaten). De Dx nummers zijn louter informatief en bord afhankelijk.
+
+![ESP8266 pinout](./assets/esp8266_pinout.png)
+
 ### ESP32
+
+![NRF24 verbonden met ESP32](./assets/fritz_basis_esp32.png)
+
+| NRF24 pin | ESP8266 pin | Vrijheid | Opmerkingen |
+| :--: | :-----: | :------: | :-: |
+| VCC | 3V | NEE | **Opgelet: verbind niet met de 5V!** |
+| GND | G | JA; er zijn meerdere G pinnen |  |
+| CE | GPIO17 | JA; iedere digitale output kan gebruikt worden | Kan ook rechtstreeks met de 3V3 of 5V verbonden worden |
+| CSN | GPIO15 | JA; iedere digitale output kan gebruikt worden |  |
+| SCK | GPIO22 | JA; iedere digitale output kan gebruikt worden |  |
+| MOSI | GPIO13 | JA; iedere digitale output kan gebruikt worden |  |
+| MISO | GPIO21 | JA; iedere digitale output kan gebruikt worden |  |
+| IRQ | GPIO36 | JA; iedere digitale input kan als interrupt gebruikt worden | Deze verbinding is optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
+
+De ESP32 is de opvolger van de ESP8266. Deze is stukken eenvoudiger m.b.t. de pinnen (minder _strappings_ waarmee rekening moet gehouden worden en ook zijn alle speciale functies verplaatsbaar). Zoals in bovenstaande tabel op te merken was kunnen alle pinnen gebruikt worden voor SPI. De bibliotheek van de NRF24 is hierop nog niet voorzien, maar de volledige _default_ SPI bus kan hermapt worden met volgend stuk code:
+
+```cpp
+SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, SPI_SS);
+```
+
+Hierbij moeten de namen natuurlijk ergens in code gedefinieerd worden:
+
+```cpp
+#define SPI_SCK   18	//this is the default pin
+#define SPI_MISO  19	//this is the default pin
+#define SPI_MOSI  23	//this is the default pin
+#define SPI_SS    5		//this is the default pin
+```
+
+Als volledigheid is onderstaande lijst nog opgenomen die de _default_ functies van alle pinnen beschrijft alsook de speciale zaken waarmee rekening moet gehouden worden.
+
+![ESP32 pinout](./assets/esp32_pinout.png)
 
 ## Voorbeeldcode
 
 ### Basis
 
-Met deze code is het mogelijk data te versturen van een zender naar een ontvanger. De zender zal hierbij een byte data versturen naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor.
+Met deze code is het mogelijk data te versturen van een zender naar een ontvanger. De zender zal hierbij een byte data versturen naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor. Dit is een basis voorbeeld. Een complexer (en meer bruikbaar) voorbeeld is terug te vinden bij [structures](#structures).
 
 Merk op dat er gebruik wordt gemaakt van een externe bibliotheek die je moet toevoegen aan je systeem. Ga hiervoor naar _bibliotheken beheren_ binnen de Arduino omgeving en zoek vervolgens op _RF24_. Installeer vervolgens de bibliotheek met exact deze naam.
 
