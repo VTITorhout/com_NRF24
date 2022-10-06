@@ -163,10 +163,23 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 | SCK | P13 | NEE |  |
 | MOSI | P11 | NEE |  |
 | MISO | P12 | NEE |  |
-| IRQ | P2 | NEE | Deze verbinding is optioneel, nodig indien gebruik moet gemaakt worden van interrupts |
+| IRQ | P2 | NEE | Enkel P0 laat een externe interrupt toe. Overigens is deze verbinding optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
 
 
 ### ESP8266
+
+![NRF24 verbonden met ESP8266](./assets/fritz_basis_esp8266.png)
+
+| NRF24 pin | ESP8266 pin | Vrijheid | Opmerkingen |
+| :--: | :-----: | :------: | :-: |
+| VCC | 3V3 | NEE | **Opgelet: verbind niet met de 5V!** |
+| GND | GND | JA; er zijn meerdere GND pinnen |  |
+| CE | GPIO2 | JA; iedere digitale output kan gebruikt worden | Kan ook rechtstreeks met de 3V3 of 5V verbonden worden |
+| CSN | GPIO0 | JA; iedere digitale output kan gebruikt worden |  |
+| SCK | GPIO14 | NEE |  |
+| MOSI | GPIO13 | NEE |  |
+| MISO | GPIO12 | NEE |  |
+| IRQ | GPIO5 | JA; iedere digitale input kan als interrupt gebruikt worden | Deze verbinding is optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
 
 ### ESP32
 
@@ -174,14 +187,21 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 
 ### Basis
 
-Met deze code is het mogelijk data te versturen van zender naar ontvanger. Er kan geselecteerd worden in de code welke rol het toestel moet hebben, dit a.d.h.v. een define:
-> `#define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)`
-
-De zender verzend vervolgens een byte data naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor.
+Met deze code is het mogelijk data te versturen van een zender naar een ontvanger. De zender zal hierbij een byte data versturen naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor.
 
 Merk op dat er gebruik wordt gemaakt van een externe bibliotheek die je moet toevoegen aan je systeem. Ga hiervoor naar _bibliotheken beheren_ binnen de Arduino omgeving en zoek vervolgens op _RF24_. Installeer vervolgens de bibliotheek met exact deze naam.
 
+Deze code werkt zonder probleem op zowel een UNO, een ESP8266 en een ESP32.
+
 ![Arduino bibliotheek](./assets/nrf24_bib.png)
+
+::: tip Rol selecteren
+
+Er kan geselecteerd worden in de code welke rol het toestel moet hebben, dit a.d.h.v. een define:
+
+```cpp
+#define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)
+```
 
 ::: tip Pinnen aanpassen
 
@@ -205,8 +225,6 @@ const byte address[6] = {0x2B, 0x96, 0x09, 0xB6, 0x35}; //unique address for NRF
 :::
 
 Aan de rest van het programma hoeft er op zich niets aangepast te worden.
-
-#### UNO
 
 ```cpp
 #include <SPI.h>    //needed for SPI communication with NRF24
@@ -299,23 +317,21 @@ void loop() {
 }
 ```
 
-#### ESP8266
-
-#### ESP32
-
 ### Piggyback data
 
-De code van de [basisversie](#basis) is reeds voorzien om te werken met piggyback data. Je kon dit merken doordat in de seriële monitor er bij het verzenden een melding gemaakt werd van `TX OK, no piggyback data`.
+In plaats van voortdurend de _role_ te wijzigen tussen zender en ontvanger (wat wel een mogelijkheid is, maar de code hierdoor stukken moeilijker wordt) maken we gebruik van het _acknowledge_ bericht bij de ontvanger om data terug te sturen naar de zender. Dit principe noemt _piggybacking_, aangezien de data wordt meegestuurd _op de rug_ van het _acknowledge_ bericht. 
 
-![Seriële monitor basisprogramma](./assets/mon_basis.png)
-
-In plaats van voortdurend de _role_ te wijzigen tussen zender en ontvanger (wat wel een mogelijkheid is, maar de code hierdoor stukken moeilijker wordt) maken we gebruik van het _acknowledge_ bericht bij de ontvanger om data terug te sturen naar de zender. Wel moeten we reeds het bericht klaargezet hebben vooraleer de zender zijn data verzend, aangezien de _acknowledging_ in hardware is opgenomen.  Dit kan gebeuren a.d.h.v. volgend commando:
+Wel moeten we reeds het bericht klaargezet hebben vooraleer de zender zijn data verzend, aangezien de _acknowledging_ in hardware is opgenomen.  Dit kan gebeuren a.d.h.v. volgend commando:
 
 ```cpp
 bool writeAckPayload(uint8_t pipe, const void* buf, uint8_t len);
 ```
 
-Passen we het voorbeeld aan van de UNO (voor de ESP's is dit identiek):
+De code van de [basisversie](#basis) is reeds voorzien om te werken met piggyback data. Je kon dit merken doordat in de seriële monitor er bij het verzenden een melding gemaakt werd van `TX OK, no piggyback data`.
+
+![Seriële monitor basisprogramma](./assets/mon_basis.png)
+
+Passen we het basis voorbeeld hiervoor aan:
 
 ```cpp
   ...
