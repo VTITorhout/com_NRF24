@@ -397,7 +397,17 @@ Wat resulteert in volgende output in de seriële monitor:
 
 In de basisversie van de code moest er voortdurend gecontroleerd worden of er reeds data was ontvangen, dit a.d.h.v. `if(radio.available());`. Dit wordt _polling_ genaamd en is vrij processor intensief. De meeste processoren hebben de mogelijkheid om te werken met een externe interrupt die de normale uitvoering van code onderbreekt en een alternatief stuk programmacode uitvoert. Indien we een extra aansluiting voorzien tussen de IRQ-pin van de NRF24 en een input die interrupts ondersteund op de _host_ controller kunnen we het _pollen_ van de NRF24 achterwege laten. Op het moment een interrupt voorkomt zal de processor meteen de alternatieve softwareroutine uitvoeren waarbij de NRF24 kan uitgelezen worden.
 
-De nodige code hangt af van de gebruikte processor. Als voorbeeld zijn de drie meest voorkomende processoren die bij ons in schoolk gebruikt worden opgenomen. De bibliotheek voor de NRF24 is echter universeel, dus de aanpassingen die moeten gebeuren aan de instellingen van de NRF24 gelden voor alle voorbeelden:
+De nodige code hangt af van de gebruikte processor. Als voorbeeld zijn de drie meest voorkomende processoren - die bij ons in school gebruikt worden - opgenomen. De bibliotheek voor de NRF24 is echter universeel, dus de aanpassingen die moeten gebeuren aan de instellingen van de NRF24 gelden voor alle voorbeelden:
+
+::: tip IRQ pin definiëren
+
+Aan het begin van onze code moeten we de extra pin die instaat voor de interrupt definiëren. Op zich mag dit op gelijk welke plaats in de code, zolang deze maar gedefinieerd is vooraleer men deze gebruikt.
+
+```cpp
+#define NRF_IRQ 2   //interrupt pin on UNO
+```
+
+:::
 
 ::: tip Setup: IRQ activeren op de NRF24
 
@@ -449,13 +459,7 @@ radio.maskIRQ(1,1,0);//interrupt on rx
 
 ::: tip Setup: interrupt activeren op de UNO
 
-Aan het begin van onze code moeten we de extra pin die instaat voor de interrupt definieren. Op zich mag dit op gelijk welke plaats in de code, zolang deze maar gedefinieerd is vooraleer men deze gebruikt.
-
-```cpp
-#define NRF_IRQ 2   //interrupt pin on UNO
-```
-
-Vervolgens moeten we in de setup deze pin instellen als ingang, waarbij we kiezen om deze met een lichte _pull-up_ weerstand naar de voeding te trekken. In de praktijk worden dikwijls interrupts van verschillende toestellen samen aangesloten op één pin, en maakt men gebruik van een _open collector_ configuratie. Ieder toestel kan dan de interrupt laag trekken (logisch 0 sturing).
+Als eerste stap moeten we in de setup de IRQ pin instellen als ingang, waarbij we kiezen om deze met een lichte _pull-up_ weerstand naar de voeding te trekken. In de praktijk worden dikwijls interrupts van verschillende toestellen samen aangesloten op één pin, en maakt men gebruik van een _open collector_ configuratie. Ieder toestel kan dan de interrupt laag trekken (logisch 0 sturing).
 
 Als tweede moet een interrupt routine gekoppeld worden aan de interrupt pin. Hier is geopteerd voor de routine `isrNRF` die zal uitgevoerd worden wanneer de pin `NRF_IRQ` een flank genereert die van hoog naar laag gaat, geschreven als `FALLING` wat een _falling edge_ beschijft.
 
@@ -489,7 +493,7 @@ void isrNRF(void){
 
 ::: tip Loop
 
-In de _loop_ kunnen we vervolgens controleren of er nieuwe data is ontvangen a.d.h.v. de _boolean_ die we in de _ISR_ hebben geset. Hier mag je _langere_ code schrijven aangezien de _ISR_ hierdoor niet gehinderd wordt.
+Als laatste stap moeten we in de _loop_ controleren of er nieuwe data is ontvangen a.d.h.v. de _boolean_ die we in de _ISR_ hebben geset. Hier mag je _langere/complexere_ code schrijven (dus processor intensievere code) aangezien de _ISR_ hierdoor niet gehinderd wordt.
 
 ```cpp
   ...
@@ -503,11 +507,64 @@ In de _loop_ kunnen we vervolgens controleren of er nieuwe data is ontvangen a.d
   ...
 ```
 
+Als alles goed gaat zullen we in de seriele monitor kunnen merken dat de _ISR_ inderdaad wordt uitgevoerd (hiervoor diende het `print` commando die we best achterwege laten). Vervolgens zal in de loop de inhoud van de ontvangen data worden getoond.
+
+![Seriële monitor ISR](./assets/isr_monitor.png)
+
 :::
 
-#### ESP8266
+#### ESP8266 & ESP32
 
-#### ESP32
+De code voor de UNO is eveneens bruikbaar op de ESP's, maar er zijn hierbij wel enkele kanttekeningen te maken.
+
+::: info digitalPinToInterrupt
+
+Dit is niet meer nodig, aangezien alle pinnen op de ESP als interrupt bron kunnen gebruikt worden. Dit dateert nog van de UNO tijd (andere architectuur) en wordt nog toegelaten voor _backwards compatibility_. Dit hoeft dus niet verwijderd te worden, maar mag wel verwijderd worden.
+
+```cpp
+  ...
+  attachInterrupt(NRF_IRQ, isrNRF, FALLING); //Interrupt will occur on falling edge
+  ...
+```
+
+:::
+
+::: warning Snelheid
+
+De ESP processoren werken op een veel hogere snelheid dan de UNO. Dit betekent ook dat het standaard Flash geheugen die gebruikt wordt om code in op te slaan te traag wordt. De ESP's zullen de code **vooraf** inladen uit het Flash geheugen en dit reeds in RAM plaatsen, zodat de processor sneller de code kan uitvoeren. Dit wordt op geregelde tijdstippen gedaan zodat de processor nooit moet _gehalt_ worden. Wanneer er echter een _onvoorziene_ interrupt komt, moet de huidige uitvoering van code onderbroken worden en een nieuw stuk code ingeladen worden **uit Flash**, wat de snelheid van uitvoeren belemmert. Het is dan ook niet slecht dat deze code niet bewaard wordt in Flash, maar in RAM. Om dit te bereiken moet het gedeelte code voorzien worden van een `IRAM_ATTR` _attribute_, zo weet de linker dat dit stuk code in RAM moet geplaatst worden en niet in Flash. Indien je dit niet doet zal de code eveneens werken, maar zal de _ISR_ trager uitgevoerd worden, wat meestal niet acceptabel is.
+
+```cpp
+  ...
+  void IRAM_ATTR isrNRF(void){
+  ...
+```
+
+:::
+
+::: warning Watchdog
+
+Op de ESP's draaien op de achtergrond nog veel stukken extra code dat de gebruiker niet ziet. Een voorbeeld hiervan is de volledige WiFi _stack_ of Bluetooth _stack_. Deze moeten ook hun processor tijd krijgen op geregelde tijdstippen. Om dit te respecteren draait er eveneens _watchdog_ code die controleert of de gebruikerscode de processor niet te lang _halteert_. Mocht een bepaalde functie te lang de processor belasten zal de _watchdog_ ingrijpen en deze code afsluiten. Ook hier zal dit geval zijn, aangezien de _ISR_ te veel processor cycli in beslag neemt. Dit komt door de `Serial.print` die opgenomen is in de _ISR_. Reeds bij de beschrijving van de UNO code was hierop gehamerd, en bij hedendaagse processoren zal dit niet getolereerd worden. Volgende melding kan gezien worden in de seriële monitor:
+
+![Seriële monitor watchdog](./assets/wdt_monitor.png)
+
+Hierop is duidelijk te zien dat er een timeout is opgetreden tijdens interrupt, en dat de processor hierdoor herstart. Op zich is het niet de processor, maar de gebruikerscode die opnieuw wordt gestart, omdat deze is _vastgelopen_ door het niet respecteren van de _watchdog timeout_. Mocht je tijdens het uitvoeren van de `Serial.print` een `yield()` of `delay()` functie uitvoeren zou de watchdog gereset worden en zou er geen enkel probleem zijn. Echter zou je hiervoor zelf de `Serial.print` routine moeten herschrijven, wat onbegonnen werk is. Het verplaatsen van de `Serial.print` naar de main is stukken minder werk...
+
+```cpp
+void IRAM_ATTR isrNRF(void){
+  bool tx,fail,rx;
+  radio.whatHappened(tx,fail,rx);
+  if(rx){ //we have only interest in receiving data
+    //Serial.println("ISR:  RX data!"); //UIT DEN BOZE IN DE ISR!!!
+    radio.read(&rxBuff,radio.getDynamicPayloadSize());
+    //we'll resend the received data to the transmitter with the next ACK package
+    radio.writeAckPayload(1, &rxBuff[0], 1);  //pipe, data, length --> send received byte back to transmitter
+    //inform the loop that there is new data inside the rxBuffer
+    newDataFromISR = true;
+  }
+}
+```
+
+:::
 
 ### Good practice
 
