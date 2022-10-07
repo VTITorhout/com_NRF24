@@ -509,7 +509,7 @@ Als laatste stap moeten we in de _loop_ controleren of er nieuwe data is ontvang
 
 :::
 
-Als alles goed gaat zullen we in de seriele monitor kunnen merken dat de _ISR_ inderdaad wordt uitgevoerd (hiervoor diende het `print` commando die we best achterwege laten). Vervolgens zal in de loop de inhoud van de ontvangen data worden getoond.
+Als alles goed gaat zullen we in de seriele monitor kunnen merken dat de _ISR_ inderdaad wordt uitgevoerd (hiervoor diende het `Serial.print` commando die we best achterwege laten). Vervolgens zal in de loop de inhoud van de ontvangen data worden getoond.
 
 ![Seriële monitor ISR](./assets/isr_monitor.png)
 
@@ -531,7 +531,7 @@ Dit is niet meer nodig, aangezien alle pinnen op de ESP als interrupt bron kunne
 
 ::: warning Snelheid
 
-De ESP processoren werken op een veel hogere snelheid dan de UNO. Dit betekent ook dat het standaard Flash geheugen die gebruikt wordt om code in op te slaan te traag wordt. De ESP's zullen de code **vooraf** inladen uit het Flash geheugen en dit reeds in RAM plaatsen, zodat de processor sneller de code kan uitvoeren. Dit wordt op geregelde tijdstippen gedaan zodat de processor nooit moet _gehalt_ worden. Wanneer er echter een _onvoorziene_ interrupt komt, moet de huidige uitvoering van code onderbroken worden en een nieuw stuk code ingeladen worden **uit Flash**, wat de snelheid van uitvoeren belemmert. Het is dan ook niet slecht dat deze code niet bewaard wordt in Flash, maar in RAM. Om dit te bereiken moet het gedeelte code voorzien worden van een `IRAM_ATTR` _attribute_, zo weet de linker dat dit stuk code in RAM moet geplaatst worden en niet in Flash. Indien je dit niet doet zal de code eveneens werken, maar zal de _ISR_ trager uitgevoerd worden, wat meestal niet acceptabel is.
+De ESP processoren werken op een veel hogere snelheid dan de UNO. Dit betekent ook dat het standaard Flash geheugen die gebruikt wordt om code in op te slaan te traag wordt. De ESP's zullen de code **vooraf** inladen uit het Flash geheugen en dit reeds in RAM plaatsen, zodat de processor sneller de code kan uitvoeren. Dit wordt op geregelde tijdstippen gedaan zodat de processor nooit moet _gehalt_ worden. Wanneer er echter een _onvoorziene_ interrupt komt, moet de huidige uitvoering van code onderbroken worden en een nieuw stuk code ingeladen worden **uit Flash**, wat de snelheid van uitvoeren belemmert. Het is dan ook niet slecht dat deze code niet bewaard wordt in Flash, maar in RAM. Om dit te bereiken moet het gedeelte code voorzien worden van een `IRAM_ATTR` _attribute_, zo weet de [_linker_](https://nl.wikipedia.org/wiki/Linken) dat dit stuk code in RAM moet geplaatst worden en niet in Flash. Indien je dit niet doet zal de code eveneens werken, maar zal de _ISR_ trager uitgevoerd worden, wat meestal niet acceptabel is.
 
 ```cpp
   ...
@@ -541,13 +541,13 @@ De ESP processoren werken op een veel hogere snelheid dan de UNO. Dit betekent o
 
 :::
 
-::: warning Watchdog
+::: danger Watchdog
 
-Op de ESP's draaien op de achtergrond nog veel stukken extra code dat de gebruiker niet ziet. Een voorbeeld hiervan is de volledige WiFi _stack_ of Bluetooth _stack_. Deze moeten ook hun processor tijd krijgen op geregelde tijdstippen. Om dit te respecteren draait er eveneens _watchdog_ code die controleert of de gebruikerscode de processor niet te lang _halteert_. Mocht een bepaalde functie te lang de processor belasten zal de _watchdog_ ingrijpen en deze code afsluiten. Ook hier zal dit geval zijn, aangezien de _ISR_ te veel processor cycli in beslag neemt. Dit komt door de `Serial.print` die opgenomen is in de _ISR_. Reeds bij de beschrijving van de UNO code was hierop gehamerd, en bij hedendaagse processoren zal dit niet getolereerd worden. Volgende melding kan gezien worden in de seriële monitor:
+Op de ESP's draaien op de achtergrond nog veel stukken extra code dat de gebruiker niet ziet. Een voorbeeld hiervan is de volledige WiFi _stack_ of Bluetooth _stack_. Deze moeten ook hun processor tijd krijgen op geregelde tijdstippen. Om dit te respecteren draait er eveneens _watchdog_ code die controleert of de gebruikerscode de processor niet te lang _halteert_. Mocht een bepaalde functie te lang de processor belasten zal de _watchdog_ ingrijpen en deze code afsluiten. Ook hier zal dit het geval zijn, aangezien de _ISR_ te veel processor cycli in beslag neemt. Dit komt door de `Serial.print` die opgenomen is in de _ISR_. Reeds bij de beschrijving van de UNO code was hierop gehamerd dat dit hier niet thuis hoort, en bij hedendaagse processoren zal dit niet getolereerd worden. Volgende melding kan gezien worden in de seriële monitor:
 
 ![Seriële monitor watchdog](./assets/wdt_monitor.png)
 
-Hierop is duidelijk te zien dat er een timeout is opgetreden tijdens interrupt, en dat de processor hierdoor herstart. Op zich is het niet de processor, maar de gebruikerscode die opnieuw wordt gestart, omdat deze is _vastgelopen_ door het niet respecteren van de _watchdog timeout_. Mocht je tijdens het uitvoeren van de `Serial.print` een `yield()` of `delay()` functie uitvoeren zou de watchdog gereset worden en zou er geen enkel probleem zijn. Echter zou je hiervoor zelf de `Serial.print` routine moeten herschrijven, wat onbegonnen werk is. Het verplaatsen van de `Serial.print` naar de main is stukken minder werk...
+Hierop is duidelijk te zien dat er een timeout is opgetreden tijdens interrupt, en dat de processor hierdoor herstart. Op zich is het niet de processor, maar de gebruikerscode die opnieuw wordt gestart, omdat deze is _vastgelopen_ door het niet respecteren van de _watchdog timeout_. Mocht je tijdens het uitvoeren van de `Serial.print` een [`yield()`](https://www.arduino.cc/reference/en/libraries/scheduler/yield/) of `delay()` functie uitvoeren zou de watchdog gereset worden en zou er geen enkel probleem zijn. Echter zou je hiervoor zelf de `Serial.print` routine moeten herschrijven, wat onbegonnen werk is. Het verplaatsen van de `Serial.print` naar de main is stukken minder werk...
 
 ```cpp
 void IRAM_ATTR isrNRF(void){
@@ -567,6 +567,25 @@ void IRAM_ATTR isrNRF(void){
 :::
 
 ### Good practice
+
+Als volgt zijn er nog enkele voorbeelden van _good practice_. Hier worden enkele voorbeelden aangehaald die kunnen gebruikt worden om overzichtelijkere en begrijpbare code te schrijven. 
+
+#### TypeDefs
+
+De [_MTU_](https://en.wikipedia.org/wiki/Maximum_transmission_unit) van de NRF24 is 32 bytes. Afhankelijk op welk systeem we zitten kan het soms onduidelijk zijn wat de grootte is van een character, een integer, een float enzoverder. Indien wij data willen versturen over de draadloze link mag nooit of te nimmer meer bytes verstuurd worden dan de MTU, dit omwille van het feit dat layer 4 (die toebehoort aan de software m.u.v. een beperkte implementatie door Nordic voor identificatie) niet geïmplementeerd is in hardware. Hierdoor ontbreekt het ook aan de mogelijkheid om berichten te _segmenteren_, d.w.z. grotere berichten op te delen in kleinere stukken, deze apart te verzenden en bij ontvangst deze terug te _concateneren_. Een te groot bericht zal dus niet verstuurd kunnen worden over de link.
+
+Om nu zeker te zijn van de grootte van een variabele zijn er in de bibliotheek [`stdint.h`](https://sites.uclouvain.be/SystInfo/usr/include/stdint.h.html) - die standaard,  (vandaar ook de naam _std_), opgenomen is bij de _compiler_ die in de Arduino omgeving is geïmplementeerd -  een aantal _typeDefs_ aangemaakt die los van de processor altijd een welbepaalde grootte hebben. Deze worden dan ook aangeduid met de extensie `_t`. Voorbeelden zijn als volgt:
+
+| typeDef | Grootte in geheugen | Bereik |
+| :-----: | :-----------------: | :----: |
+| uint8_t | 1 byte | 0 t.e.m. 255 |
+| uint16_t | 2 bytes | 0 t.e.m. 65535 |
+| uint32_t | 4 bytes | 0 t.e.m. 4294967295 |
+| int8_t | 1 byte | -127 t.e.m. 128 |
+| int16_t | 2 bytes | -32767 t.e.m. 32768 |
+| int32_t | 4 bytes | -2147483647 t.e.m. 2147483648 |
+
+In (voorbeeld)codes wordt nog te frequent gebruik gemaakt van variabelen zoals _char_, die in Arduino overeenstemt met een *int8_t*, terwijl een _byte_ dan weer overeenstemt met een *uint8_t*. Een *byte* kan dus waarden bevatten tussen 0 en 255, terwijl een *char* dan weer waarden kan bezitten tussen -127 en 128. Beide variabelen nemen echter wel *8 bits* geheugen in. Het gebruik van de juiste *typedef* voorkomt deze fouten en is dan ook stukken leesbaarder.
 
 #### Structures
 
