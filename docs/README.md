@@ -507,17 +507,17 @@ Als laatste stap moeten we in de _loop_ controleren of er nieuwe data is ontvang
   ...
 ```
 
+:::
+
 Als alles goed gaat zullen we in de seriele monitor kunnen merken dat de _ISR_ inderdaad wordt uitgevoerd (hiervoor diende het `print` commando die we best achterwege laten). Vervolgens zal in de loop de inhoud van de ontvangen data worden getoond.
 
 ![Seriële monitor ISR](./assets/isr_monitor.png)
-
-:::
 
 #### ESP8266 & ESP32
 
 De code voor de UNO is eveneens bruikbaar op de ESP's, maar er zijn hierbij wel enkele kanttekeningen te maken.
 
-::: info digitalPinToInterrupt
+::: tip digitalPinToInterrupt
 
 Dit is niet meer nodig, aangezien alle pinnen op de ESP als interrupt bron kunnen gebruikt worden. Dit dateert nog van de UNO tijd (andere architectuur) en wordt nog toegelaten voor _backwards compatibility_. Dit hoeft dus niet verwijderd te worden, maar mag wel verwijderd worden.
 
