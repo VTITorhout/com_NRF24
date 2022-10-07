@@ -585,8 +585,70 @@ Om nu zeker te zijn van de grootte van een variabele zijn er in de bibliotheek [
 | int16_t | 2 bytes | -32767 t.e.m. 32768 |
 | int32_t | 4 bytes | -2147483647 t.e.m. 2147483648 |
 
-In (voorbeeld)codes wordt nog te frequent gebruik gemaakt van variabelen zoals _char_, die in Arduino overeenstemt met een *int8_t*, terwijl een _byte_ dan weer overeenstemt met een *uint8_t*. Een *byte* kan dus waarden bevatten tussen 0 en 255, terwijl een *char* dan weer waarden kan bezitten tussen -127 en 128. Beide variabelen nemen echter wel *8 bits* geheugen in. Het gebruik van de juiste *typedef* voorkomt deze fouten en is dan ook stukken leesbaarder.
+In (voorbeeld)codes wordt nog te frequent gebruik gemaakt van variabelen zoals _char_, die in Arduino overeenstemt met een *int8_t*, terwijl een _byte_ dan weer overeenstemt met een *uint8_t*. Een *byte* kan dus waarden bevatten tussen 0 en 255, terwijl een *char* dan weer waarden kan bezitten tussen -127 en 128. Beide variabelen nemen echter wel *8 bits* geheugen in. Over een *int* en een *long* spreken we zelfs niet, aangezien deze zelfs een verschillende lengte kunnen hebben afhankelijk van het systeem waarop we werken. Het gebruik van de juiste *typedef* is stukken transparanter (want het aantal bits die ingenomen wordt is verwerkt in de naam) en voorkomt fouten met het bereik.
 
 #### Structures
+
+Het bijhouden van data die samenhoort kan soms een moeilijke opdracht zijn, zeker wanneer er veel verschillende variabelen zijn en zeker wanneer deze variabelen verschillende keren nodig zijn voor de toepassing. 
+
+Voor dit alles bestaat echter een vrij eenvoudige oplossing, namelijk een *structure* genaamd. Een *structure* kun je het best aanzien als een verzameling, waarbij je als gebruiker zelf kan kiezen wat in de verzameling moet komen.
+
+Stel als voorbeeld dat de draadloze link met de NRF24 gebruikt zal worden om een tele-geleid autootje te bedienen, dan zullen er verschillende zaken moeten doorgestuurd worden van de afstandsbediening naar het autootje: 
+* Snelheid: als het enkel vooruit kan rijden is het een strikt positief getal. Wanneer het autootje ook achteruit kan rijden kan het zowel positief als negatief zijn.
+* Stuurhoek: positief of negatief getal indien met uitgaat van de neutrale positie.
+* Buzzer: booleaanse waarde, al dan niet actief.
+* Verlichting: afhankelijk of dit een enkele of verschillende zijn kan hiervoor een boolean of een byte gebruikt worden.
+* ...
+
+Dit maakt dat we meteen al verschillende variabelen zullen hebben die allemaal over de draadloze link zullen moeten gestuurd worden. Het apart verwerken van deze variabelen tot een buffer met data is veel werk, niet transparant en zeker niet flexibel (wat indien iets extra's er bij moet komen?). Het is dan ook logisch dat we deze zaken zullen plaatsen in een verzameling met variabelen die als geheel doorgestuurd zal worden.
+
+Het aanmaken van een structure gebeurd vooraf (vooraleer men deze kan gebruiken). De compiler moet weten dat er een structure bestaat en hoe deze opgebouwd zal worden. Je kan een structure ook aanzien als een _nieuwe_ variabele, die we vervolgens kunnen gebruiken in de code. Volgend stukje code zou gebruikt kunnen worden voor bovenstaande toepassing:
+
+```cpp
+struct packedFrame{
+  int16_t speed;		//speed with 10-bit resolution for PWM
+  int8_t heading;		//steering angle in degrees (+- 90°) for servo
+  bool buzzer;			//boolean value for buzzer
+  uint8_t lights;		//packed booleans for all lights (bit0 = headlight, bit1 = breaklights, ...)
+};
+packedFrame;
+```
+
+Bovenstaande code is enkel de beschrijving van hoe de _structure_ er uit ziet, maar deze bestaat nog niet in het geheugen. Het aanmaken van de variabele van het type structure (wat meerdere keren kan gebeuren) doen we als volgt:
+
+```cpp
+packedFrame txBuff;		//create a structure of type packedFrame and name it txBuff
+```
+
+De variabele _txBuff_ zal hierdoor 5 bytes geheugen innemen, namelijk de som van de verschillende onderdelen van de structure. Hoe deze in het geheugen worden geplaatst hangt af van de compiler/linker, maar voor de gebruiker maakt dit weinig uit. De gebruiker zal zich hiermee niet bezig moeten houden aangezien deze alle elementen apart kan benaderen. Dit kan als volgt:
+
+```cpp
+txBuff.speed = +145;
+txBuff.heading = -5;
+txBuff.buzzer = true;
+txBuff.lights = (breaklight<<1)||headlight;
+```
+
+Als laatste stap moeten we nog de structure verzenden over de draadloze link. Dit kan  als volgt:
+
+```cpp
+radio.write(&txBuff, sizeof(txBuff));	//send the struct with its length
+```
+
+De `&txBuff` is het adres van de structure (in RAM), en het commando `sizeof(txBuff)` vertegenwoordigd de grootte van de structure, namelijk de 5 bytes. Er zal dus 5 bytes uit het RAM geheugen verstuurd worden vertrekkende vanaf het startadres van de structure. 
+
+Langs de ontvangstkant kunnen we een identieke manier van werken toepassen. Dit zal als volgt zijn:
+
+```cpp
+radio.read(&rxBuff,radio.getDynamicPayloadSize());	//receive data and write it away at the address of the struct
+```
+
+Hier geven we het adres van de variabele van het type struct op (`rxBuff` in dit geval), en als alles goed is verlopen zou het pakket die we ontvangen hebben dezelfde lengte als de struct moeten hebben. Via het commando `getDynamicPayloadSize()` kunnen we de lengte van het pakket achterhalen (die in de header zit verwerkt).
+
+De totale code kan er dan als volgt uitzien:
+
+```cpp
+
+```
 
 #### Union
