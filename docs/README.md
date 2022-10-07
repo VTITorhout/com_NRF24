@@ -163,7 +163,7 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 | SCK | P13 | NEE |  |
 | MOSI | P11 | NEE |  |
 | MISO | P12 | NEE |  |
-| IRQ | P2 | NEE | Enkel P2 laat een externe interrupt toe. Overigens is deze verbinding optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
+| IRQ | P2 | JA; maar beperkt | Enkel P2 en P3 laten een externe interrupt toe. Overigens is deze verbinding optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
 
 
 ### ESP8266
@@ -240,6 +240,8 @@ Er kan geselecteerd worden in de code welke rol het toestel moet hebben, dit a.d
 ```cpp
 #define ROLE_TX  false      //can be true, any other value will result in RX (even if left away)
 ```
+
+:::
 
 ::: tip Pinnen aanpassen
 
@@ -393,7 +395,115 @@ Wat resulteert in volgende output in de seriële monitor:
 
 ### IRQ's
 
+In de basisversie van de code moest er voortdurend gecontroleerd worden of er reeds data was ontvangen, dit a.d.h.v. `if(radio.available());`. Dit wordt _polling_ genaamd en is vrij processor intensief. De meeste processoren hebben de mogelijkheid om te werken met een externe interrupt die de normale uitvoering van code onderbreekt en een alternatief stuk programmacode uitvoert. Indien we een extra aansluiting voorzien tussen de IRQ-pin van de NRF24 en een input die interrupts ondersteund op de _host_ controller kunnen we het _pollen_ van de NRF24 achterwege laten. Op het moment een interrupt voorkomt zal de processor meteen de alternatieve softwareroutine uitvoeren waarbij de NRF24 kan uitgelezen worden.
+
+De nodige code hangt af van de gebruikte processor. Als voorbeeld zijn de drie meest voorkomende processoren die bij ons in schoolk gebruikt worden opgenomen. De bibliotheek voor de NRF24 is echter universeel, dus de aanpassingen die moeten gebeuren aan de instellingen van de NRF24 gelden voor alle voorbeelden:
+
+::: tip Setup: IRQ activeren op de NRF24
+
+Standaard wordt er geen interrupt gegeneerd op de NRF24. Via de bibliotheek kunnen we wel enkele interrupts activeren. Volgende informatie is terug te vinden in de header file van de bibliotheek:
+
+```cpp
+     /*
+	 This function is used to configure what events will trigger the Interrupt
+     Request (IRQ) pin active LOW.
+     The following events can be configured:
+     1. "data sent": This does not mean that the data transmitted was
+     received, only that the attempt to send it was complete.
+     2. "data failed": This means the data being sent was not received. This
+     event is only triggered when the auto-ack feature is enabled.
+     3. "data received": This means that data from a receiving payload has
+     been loaded into the RX FIFO buffers. Remember that there are only 3
+     levels available in the RX FIFO buffers.
+     
+     By default, all events are configured to trigger the IRQ pin active LOW.
+     When the IRQ pin is active, use whatHappened() to determine what events
+     triggered it. Remember that calling whatHappened() also clears these
+     events' status, and the IRQ pin will then be reset to inactive HIGH.
+     
+     The following code configures the IRQ pin to only reflect the "data received"
+     event:
+     @code
+     radio.maskIRQ(1, 1, 0);
+     @endcode
+     
+     @param tx_ok  `true` ignores the "data sent" event, `false` reflects the
+     "data sent" event on the IRQ pin.
+     @param tx_fail  `true` ignores the "data failed" event, `false` reflects the
+     "data failed" event on the IRQ pin.
+     @param rx_ready `true` ignores the "data received" event, `false` reflects the
+     "data received" event on the IRQ pin.
+     */
+    void maskIRQ(bool tx_ok, bool tx_fail, bool rx_ready);
+```
+
+We hebben enkel nood aan een interrupt bij ontvangst van data. *tx_ok* en *tx_fail* laten we achterwege (plaatsen we op true, inverse logica), *rx_ready* plaatsen we op false, zodat een interrupt wordt gegenereerd bij ontvangst van data. 
+
+```cpp
+radio.maskIRQ(1,1,0);//interrupt on rx
+```
+
+::: 
+
 #### UNO
+
+::: tip Setup: interrupt activeren op de UNO
+
+Aan het begin van onze code moeten we de extra pin die instaat voor de interrupt definieren. Op zich mag dit op gelijk welke plaats in de code, zolang deze maar gedefinieerd is vooraleer men deze gebruikt.
+
+```cpp
+#define NRF_IRQ 2   //interrupt pin on UNO
+```
+
+Vervolgens moeten we in de setup deze pin instellen als ingang, waarbij we kiezen om deze met een lichte _pull-up_ weerstand naar de voeding te trekken. In de praktijk worden dikwijls interrupts van verschillende toestellen samen aangesloten op één pin, en maakt men gebruik van een _open collector_ configuratie. Ieder toestel kan dan de interrupt laag trekken (logisch 0 sturing).
+
+Als tweede moet een interrupt routine gekoppeld worden aan de interrupt pin. Hier is geopteerd voor de routine `isrNRF` die zal uitgevoerd worden wanneer de pin `NRF_IRQ` een flank genereert die van hoog naar laag gaat, geschreven als `FALLING` wat een _falling edge_ beschijft.
+
+```cpp
+pinMode(NRF_IRQ, INPUT_PULLUP); //good practice to pull interrupt pin high, interrupt will be mostly inverted logic
+attachInterrupt(digitalPinToInterrupt(NRF_IRQ), isrNRF, FALLING); //Interrupt will occur on falling edge
+```
+
+:::
+
+::: tip ISR routine
+
+Als tweede stap moeten we ergens in onze code, en dit **buiten** de _setup_ en de _loop_, onze ISR routine beschrijven. In deze routine controleren we eerst wat de oorzaak was van de interrupt, waardoor de IRQ ook  gereset wordt. Indien de oorzaak kwam door de ontvangst van een bericht lezen we de data uit de NRF24. Probeer deze routine zo kort mogelijk te houden! Dit kan door verwerking van de data te verplaatsen naar de _loop_. Informeer de _loop_ via een _boolean_ dat geset wordt in de _ISR_. Als voorbeeld is hier nog een `Serial.println` commando opgenomen, maar dit hoort niet in de ISR thuis!
+
+```cpp
+void isrNRF(void){
+  bool tx,fail,rx;
+  radio.whatHappened(tx,fail,rx);
+  if(rx){ //we have only interest in receiving data
+    Serial.println("ISR:  RX data!");
+    radio.read(&rxBuff,radio.getDynamicPayloadSize());
+    //we'll resend the received data to the transmitter with the next ACK package
+    radio.writeAckPayload(1, &rxBuff[0], 1);  //pipe, data, length --> send received byte back to transmitter
+    //inform the loop that there is new data inside the rxBuffer
+    newDataFromISR = true;
+  }
+}
+```
+
+:::
+
+::: tip Loop
+
+In de _loop_ kunnen we vervolgens controleren of er nieuwe data is ontvangen a.d.h.v. de _boolean_ die we in de _ISR_ hebben geset. Hier mag je _langere_ code schrijven aangezien de _ISR_ hierdoor niet gehinderd wordt.
+
+```cpp
+  ...
+  if(newDataFromISR){
+    //show the content of the received data
+    Serial.print("NRF:\tRX: ");
+    Serial.println(rxBuff[0]);
+    //we are done doing things with the data, release the buffer
+    newDataFromISR = false;
+  }
+  ...
+```
+
+:::
 
 #### ESP8266
 
