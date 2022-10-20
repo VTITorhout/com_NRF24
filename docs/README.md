@@ -582,8 +582,8 @@ Om nu zeker te zijn van de grootte van een variabele zijn er in de bibliotheek [
 | uint16_t | 2 bytes | 0 t.e.m. 65535 |
 | uint32_t | 4 bytes | 0 t.e.m. 4294967295 |
 | int8_t | 1 byte | -127 t.e.m. 128 |
-| int16_t | 2 bytes | -32767 t.e.m. 32768 |
-| int32_t | 4 bytes | -2147483647 t.e.m. 2147483648 |
+| int16_t | 2 bytes | -32768 t.e.m. 32767 |
+| int32_t | 4 bytes | -2147483648 t.e.m. 2147483647 |
 
 In (voorbeeld)codes wordt nog te frequent gebruik gemaakt van variabelen zoals _char_, die in Arduino overeenstemt met een *int8_t*, terwijl een _byte_ dan weer overeenstemt met een *uint8_t*. Een *byte* kan dus waarden bevatten tussen 0 en 255, terwijl een *char* dan weer waarden kan bezitten tussen -127 en 128. Beide variabelen nemen echter wel *8 bits* geheugen in. Over een *int* en een *long* spreken we zelfs niet, aangezien deze zelfs een verschillende lengte kunnen hebben afhankelijk van het systeem waarop we werken. Het gebruik van de juiste *typedef* is stukken transparanter (want het aantal bits die ingenomen wordt is verwerkt in de naam) en voorkomt fouten met het bereik.
 
