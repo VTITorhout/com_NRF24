@@ -1,4 +1,4 @@
-# NRF24
+## NRF24
 
 In heel veel toepassing komt het wel eens voor dat er nood is aan draadloze communicatie, maar in sommige gevallen kan het gebruik van WiFi of Bluetooth uit den boze zijn wegens te complex of een te groot vermogensverbruik. Denken we hierbij aan IoT toepassingen waar er datacaptatie nodig is op afstand, bij robotica waar kabelverbindingen niet mogelijk zijn of zelfs domotica, om eenvoudig een schakelaar bij te plaatsen zonder dat er hoeft gekapt en geboord te worden in muren. 
 
@@ -8,7 +8,7 @@ Als het gaat over _low power_ draadloze communicatie is Nordic Semiconductors we
 
 ![NRF24 IC](./assets/nrf24_ic.png)
 
-## De draadloze module
+### De draadloze module
 
 De NRF24 alleen als IC is niet bruikbaar. Deze heeft nog allerlei randcomponenten nodig voordat deze kan gebruikt worden. In de handel zijn dan ook veel (identieke, volgens het voorbeeld van Nordic) modules te vinden waarop deze IC is gemonteerd, samen met zijn randcomponenten:
 1. Antenne (meestal opgenomen als PCB trace)
@@ -19,7 +19,7 @@ De NRF24 alleen als IC is niet bruikbaar. Deze heeft nog allerlei randcomponente
 
 ![NRF24 randcomponenten](./assets/nrf24_components.png)
 
-### Spectrum
+#### Spectrum
 
 De NRF24 is ontworpen om te werken in de 2,4GHz ISM band (vandaar ook zijn naam: **N**ordic **R**adio **F**requency **2**.**4**). Deze band is wellicht bij iedereen gekend als de band voor WiFi, wat klopt. De IC deelt het spectrum met deze van WiFi (en nog veel andere toepassingen, behorende tot de **I**ndustrial, **S**cientific en **M**edical werelden). 
 
@@ -41,7 +41,7 @@ Wanneer we echter verder kijken in de datasheet zien we het volgende:
 
 De NRF24 kan ingesteld worden om 126 kanalen te gebruiken, en bij 1Mbit hebben deze elk maximaal 1MHz bandbreedte. Het eerste kanaal start met een frequentie van 2400MHz, het volgende 2401MHz enzoverder. De aandachtige lezer zal wellicht opgemerkt hebben dat de kanalen vanaf 97 en verder niet gebruikt worden door WiFi, en dat deze dan ook bij uitstek geschikt zijn om ongestoord te communiceren. Wel is op te merken dat dit resulteert in een frequentie die buiten het door het ITU toegekende spectrum valt, en men mogelijk illegaal bezig is.
 
-### Voeding en vermogen
+#### Voeding en vermogen
 
 De NRF24 werkt op 3,3V en **NIET** op 5V. Een spanningsbereik van 1,9 tot 3,6V is acceptabel. Bij lagere spanningen zal de module niet werken (wat op zich geen probleem is), bij hogere spanningen zal de module stuk gaan (wat wel een probleem is). De digitale pinnen (in- en uitgangen) zijn echter wel 5V compatibel, en kunnen dus rechtstreeks aangesloten worden op bijvoorbeeld een Arduino [UNO](#uno). Bij een [ESP8266](#esp8266) en een [ESP32](#esp32) is er totaal geen probleem.
 
@@ -56,7 +56,7 @@ Het zendvermogen van de module is instelbaar in een viertal stappen, waarbij ied
 
 Naast het vermogen die essentieel is om te kunnen zenden zal de controller en de ontvangstlogica in de chip ook nog een deel vermogen opnemen, namelijk 13,5mA! Dit zal voortdurend gebeuren tijdens het luisteren (via `void startListening(void)`). Dit verbruik kan echter grotendeels worden uitgeschakeld via commando's, om het zo langer op een zelfde batterijlading te kunnen uithouden. Dit valt echter buiten het bestek van deze module, en voor hen die hierin interesse hebben wordt er verwezen naar volgende [youtube video](https://youtu.be/MvjpmsH2wKI) en de juiste commando's hiervoor, namelijk `void powerDown(void)` en `void powerUp(void)`.
 
-### Aansluitingen
+#### Aansluitingen
 
 ![NRF24 pinout](./assets/nrf24_pinout.png)
 
@@ -70,7 +70,7 @@ Naast de essentiële aansluitingen zijn er ook nog drie andere aansluitingen, wa
 * CE (**C**hip **E**nable): Deze pin moet altijd hoog zijn opdat de NRF24 zou kunnen werken. Deze laagmaken plaatst de NRF24 in ultra low power mode (900nA).
 * IRQ (**I**nterrupt **R**e**Q**uest): De NRF24 kan deze pin hoog/laag maken bij ontvangst van data om zo de _host_ controller te informeren van ontvangst. Zie hiervoor [volgend voorbeeld](#irqs)
 
-## Het gebruikte protocol
+### Het gebruikte protocol
 
 Om (draadloze) communicatie te kunnen doen werken is er nood aan afspraken. Er zijn afspraken gemaakt over de signaalniveau's die uitgestuurd mogen worden, welke modulatie er toegepast wordt enzoverder. Dit zijn afspraken op niveau 0 (fysische laag) van het [OSI-model](https://nl.wikipedia.org/wiki/OSI-model). Natuurlijk moeten zowel zender als ontvanger dezelfde afspraken hanteren, of deze zullen elkaar niet verstaan. 
 
@@ -83,7 +83,7 @@ Maar communicatie gaat verder dan dit. Naast de afspraken op niveau 0 moeten ook
 
 Bij de modulatietechniek wordt hier niet over gesproken, aangezien de modulatietechniek zich situeert op niveau 0 van het OSI model. Nordic Semiconductors heeft echter wel een eigen protocol toegevoegd bovenop de modulatietechniek, namelijk het _enhanced ShockBurst_ protocol, wat zich situeert op niveau 1, 2 & 4. In dit protocol (zie hieronder) is er ruimte gelaten voor de data van de gebruiker, die op zijn beurt een hogere laag van het OSI model kan implementeren. Meestal zal dit meteen laag 7 zijn (applicatie laag).
 
-### (Enhanced) ShockBurst
+#### (Enhanced) ShockBurst
 
 De NRF24 maakt  gebruikt van een propriëtair protocol die zich situeert op laag 1 en 2 van het OSI-model. Het is een heel eenvoudig protocol die kan opgedeeld worden in vijf verschillende velden:
 
@@ -97,7 +97,7 @@ De NRF24 maakt  gebruikt van een propriëtair protocol die zich situeert op laag
 
 Als gebruiker hebben wij nood aan data verzenden naar een specifieke gebruiker. De velden die voor ons van interesse zijn beperken zich dan ook tot het _adres_ en de _payload_. De overige velden zullen ingevuld worden doordat we gebruik maken van een bibliotheek.
 
-### Auto ACK
+#### Auto ACK
 
 Het _Enhanced_ protocol laat toe dat er controle gebeurd op het al dan niet feilloos verzenden van data. De controle hiervan wordt beschreven op niveau 4 (transport laag) van het OSI-model, die meer toebehoort aan de software dan aan de hardware. Nordic heeft echter beslist dit op te nemen in hun controller, zodat de software voor de eindgebruiker eenvoudiger wordt. Het _packet control_ veld wordt hiervoor gebruikt en verder opgedeeld in drie nieuwe velden:
 
@@ -111,11 +111,11 @@ Het _packet ID_ en de _no ACK_ kunnen nu gebruikt worden om een bericht te ident
 
 Merk op dat een pakket verloren/corrupt kan geraken tijdens zenden van zender naar ontvanger, maar eveneens omgekeerd. Het kan dus ook zijn dat de ontvanger eenzelfde pakket meerdere malen zal ontvangen. Hiervoor dient eveneens de ID die toelaat te controleren of het pakket reeds feilloos is ontvangen.
 
-# Gebruik van de NRF24
+## Gebruik van de NRF24
 
-## Voedingsproblemen
+### Voedingsproblemen
 
-### Storing
+#### Storing
 
 De NRF24 IC is een analoog/digitale IC, waarbij het analoge gedeelte een zeer hoge ingangsgevoeligheid heeft zodat dit feilloos zeer zwakke RF signalen kan opvangen. Storing op de voeding zal dan ook meestal zorgen voor corrupte data bij ontvangst. Het is dan ook belangrijk dat de gebruikte voeding voldoende stabiel is en geen gesuperponeerd AC signaal bevat. Dit AC signaal kan er typisch komen van een schakelende regelaar. 
 
@@ -133,7 +133,7 @@ Indien er gebruik wordt gemaakt van een _genuine_ Arduino UNO is bovenstaand bor
 
 ![UNO R3 power supply](./assets/uno_pwr.png)
 
-### Piekvermogen
+#### Piekvermogen
 
 De NRF24 is in staat in zeer korte tijd een groot piekvermogen op te nemen, nodig om te kunnen zenden. Wanneer de NRF24 gevoed wordt via lange jumperdraadjes (wat meestal het geval is in labo opstellingen) kan de gevormde weerstand tussen voeding en NRF24 er voor zorgen dat dit niet kan geleverd worden. Dit probleem is niet op te merken in de communicatie (digitaal), maar situeert zich ter hoogte van het analoge gedeelte (transmitter/receiver). Dit zal altijd resulteren in ontvangstfouten, wat op applicatieniveau wel kan waargenomen worden. 
 
@@ -141,7 +141,7 @@ Dit euvel is eenvoudig op te lossen door zo dicht mogelijk bij de NRF24 een capa
 
 ![NRF24 toegevoegde capaciteit](./assets/nrf24_cap.png)
 
-## Interfacing
+### Interfacing
 
 Het aansluiten van de NRF24 op een microcontroller is vrij evident. In totaal zijn er een drietal zaken die moeten verbonden worden:
 * Voeding: **Opgelet** deze werkt op 3,3V!
@@ -150,7 +150,7 @@ Het aansluiten van de NRF24 op een microcontroller is vrij evident. In totaal zi
 
 Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met hierbij detail over vrijheden.
 
-### UNO
+#### UNO
 
 ![NRF24 verbonden met UNO](./assets/fritz_basis_uno.png)
 
@@ -166,7 +166,7 @@ Voor iedere controller wordt de specifieke lijst gegeven van aansluitingen met h
 | IRQ | P2 | JA; maar beperkt | Enkel P2 en P3 laten een externe interrupt toe. Overigens is deze verbinding optioneel, enkel nodig indien gebruik moet gemaakt worden van interrupts |
 
 
-### ESP8266
+#### ESP8266
 
 ![NRF24 verbonden met ESP8266](./assets/fritz_basis_esp8266.png)
 
@@ -187,7 +187,7 @@ In de code moet gebruik gemaakt worden van de GPIO nummers (waarbij GPIO wordt w
 
 ![ESP8266 pinout](./assets/esp8266_pinout.png)
 
-### ESP32
+#### ESP32
 
 ![NRF24 verbonden met ESP32](./assets/fritz_basis_esp32.png)
 
@@ -221,9 +221,9 @@ Als volledigheid is onderstaande lijst nog opgenomen die de _default_ functies v
 
 ![ESP32 pinout](./assets/esp32_pinout.png)
 
-## Voorbeeldcode
+### Voorbeeldcode
 
-### Basis
+#### Basis
 
 Met deze code is het mogelijk data te versturen van een zender naar een ontvanger. De zender zal hierbij een byte data versturen naar de ontvanger, waarbij de inhoud een teller is die na ieder bericht verhoogd wordt met 1. De ontvanger geeft deze teller weer op de seriële monitor. Dit is een basis voorbeeld. Een complexer (en meer bruikbaar) voorbeeld is terug te vinden bij [structures](#structures).
 
@@ -357,7 +357,7 @@ void loop() {
 }
 ```
 
-### Piggyback data
+#### Piggyback data
 
 In plaats van voortdurend de _role_ te wijzigen tussen zender en ontvanger (wat wel een mogelijkheid is, maar de code hierdoor stukken moeilijker wordt) maken we gebruik van het _acknowledge_ bericht bij de ontvanger om data terug te sturen naar de zender. Dit principe noemt _piggybacking_, aangezien de data wordt meegestuurd _op de rug_ van het _acknowledge_ bericht. 
 
@@ -393,7 +393,7 @@ Wat resulteert in volgende output in de seriële monitor:
 
 ![Seriële monitor piggyback](./assets/mon_piggy.png)
 
-### IRQ's
+#### IRQ's
 
 In de basisversie van de code moest er voortdurend gecontroleerd worden of er reeds data was ontvangen, dit a.d.h.v. `if(radio.available());`. Dit wordt _polling_ genaamd en is vrij processor intensief. De meeste processoren hebben de mogelijkheid om te werken met een externe interrupt die de normale uitvoering van code onderbreekt en een alternatief stuk programmacode uitvoert. Indien we een extra aansluiting voorzien tussen de IRQ-pin van de NRF24 en een input die interrupts ondersteund op de _host_ controller kunnen we het _pollen_ van de NRF24 achterwege laten. Op het moment een interrupt voorkomt zal de processor meteen de alternatieve softwareroutine uitvoeren waarbij de NRF24 kan uitgelezen worden.
 
@@ -455,7 +455,7 @@ radio.maskIRQ(1,1,0);//interrupt on rx
 
 ::: 
 
-#### UNO
+##### UNO
 
 ::: tip Setup: interrupt activeren op de UNO
 
@@ -513,7 +513,7 @@ Als alles goed gaat zullen we in de seriele monitor kunnen merken dat de _ISR_ i
 
 ![Seriële monitor ISR](./assets/isr_monitor.png)
 
-#### ESP8266 & ESP32
+##### ESP8266 & ESP32
 
 De code voor de UNO is eveneens bruikbaar op de ESP's, maar er zijn hierbij wel enkele kanttekeningen te maken.
 
@@ -566,11 +566,11 @@ void IRAM_ATTR isrNRF(void){
 
 :::
 
-### Good practice
+#### Good practice
 
 Als volgt zijn er nog enkele voorbeelden van _good practice_. Hier worden enkele voorbeelden aangehaald die kunnen gebruikt worden om overzichtelijkere en begrijpbare code te schrijven. 
 
-#### TypeDefs
+##### TypeDefs
 
 De [_MTU_](https://en.wikipedia.org/wiki/Maximum_transmission_unit) van de NRF24 is 32 bytes. Afhankelijk op welk systeem we zitten kan het soms onduidelijk zijn wat de grootte is van een character, een integer, een float enzoverder. Indien wij data willen versturen over de draadloze link mag nooit of te nimmer meer bytes verstuurd worden dan de MTU, dit omwille van het feit dat layer 4 (die toebehoort aan de software m.u.v. een beperkte implementatie door Nordic voor identificatie) niet geïmplementeerd is in hardware. Hierdoor ontbreekt het ook aan de mogelijkheid om berichten te _segmenteren_, d.w.z. grotere berichten op te delen in kleinere stukken, deze apart te verzenden en bij ontvangst deze terug te _concateneren_. Een te groot bericht zal dus niet verstuurd kunnen worden over de link.
 
@@ -582,12 +582,16 @@ Om nu zeker te zijn van de grootte van een variabele zijn er in de bibliotheek [
 | uint16_t | 2 bytes | 0 t.e.m. 65535 |
 | uint32_t | 4 bytes | 0 t.e.m. 4294967295 |
 | int8_t | 1 byte | -127 t.e.m. 128 |
-| int16_t | 2 bytes | -32768 t.e.m. 32767 |
-| int32_t | 4 bytes | -2147483648 t.e.m. 2147483647 |
+| int16_t | 2 bytes | -32767 t.e.m. 32768 |
+| int32_t | 4 bytes | -2147483647 t.e.m. 2147483648 |
 
 In (voorbeeld)codes wordt nog te frequent gebruik gemaakt van variabelen zoals _char_, die in Arduino overeenstemt met een *int8_t*, terwijl een _byte_ dan weer overeenstemt met een *uint8_t*. Een *byte* kan dus waarden bevatten tussen 0 en 255, terwijl een *char* dan weer waarden kan bezitten tussen -127 en 128. Beide variabelen nemen echter wel *8 bits* geheugen in. Over een *int* en een *long* spreken we zelfs niet, aangezien deze zelfs een verschillende lengte kunnen hebben afhankelijk van het systeem waarop we werken. Het gebruik van de juiste *typedef* is stukken transparanter (want het aantal bits die ingenomen wordt is verwerkt in de naam) en voorkomt fouten met het bereik.
 
-#### Structures
+##### Union
+
+Wat nauw aansluit met de bovenstaande *typeDefs* is hoe de waarden worden opgeslagen in het geheugen. Met de gebruikte *TypeDefs* kun je a.d.h.v. de naam al zien hoeveel bytes geheugen er ingenomen zullen worden. 
+
+##### Structures
 
 Het bijhouden van data die samenhoort kan soms een moeilijke opdracht zijn, zeker wanneer er veel verschillende variabelen zijn en bovenal wanneer deze variabelen verschillende keren nodig zijn voor de toepassing. 
 
@@ -784,5 +788,3 @@ void loop() {
 Bij ontvangstzijde worden de verschillende waarden weergegeven. 
 
 ![Seriële monitor structure](./assets/struct_monitor.png)
-
-#### Union
